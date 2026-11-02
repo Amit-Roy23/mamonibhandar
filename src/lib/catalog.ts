@@ -319,9 +319,12 @@ export function buildSeedProducts(): Product[] {
       price: p.price ?? first?.price ?? 0,
       mrp: p.mrp ?? first?.mrp ?? 0,
       unit: p.unit ?? first?.label ?? '1 pc',
-      stock: p.stock ?? first?.stock ?? 0,
+      stock: variants ? variants.reduce((sum, v) => sum + v.stock, 0) : p.stock ?? 0,
       emoji: p.emoji,
       featured: p.featured ?? false,
+      active: true,
+      image: null,
+      soldCount: 0,
       variants,
       createdAt: now,
     }

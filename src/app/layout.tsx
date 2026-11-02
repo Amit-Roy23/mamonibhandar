@@ -1,46 +1,41 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
+import type { Metadata, Viewport } from 'next'
+import { Bricolage_Grotesque, Plus_Jakarta_Sans } from 'next/font/google'
+import './globals.css'
+import { Providers } from '@/components/providers'
+import { SITE } from '@/lib/site'
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const body = Plus_Jakarta_Sans({ variable: '--font-body', subsets: ['latin'], display: 'swap' })
+const display = Bricolage_Grotesque({ variable: '--font-display-face', subsets: ['latin'], display: 'swap' })
 
 export const metadata: Metadata = {
-  title: "DesiBasket — Indian Grocery Delivery",
+  metadataBase: new URL(SITE.url),
+  title: {
+    default: `${SITE.name} · ${SITE.legalName} — ${SITE.tagline}`,
+    template: `%s · ${SITE.name}`,
+  },
   description:
-    "Shop authentic Indian groceries online: atta, rice, dal, masalas, dairy, snacks and more at bazaar prices. Cash on Delivery available. Free delivery above ₹499.",
-  keywords: ["Indian grocery", "grocery delivery", "atta", "dal", "masala", "DesiBasket"],
-  icons: {
-    icon: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧺</text></svg>",
-  },
+    'Order fresh groceries, staples, snacks and daily essentials online from MB Mart (Maamoni Bhandar), Mirza Bazaar, Udaipur, Gomati, Tripura. Cash or UPI on delivery.',
+  keywords: ['MB Mart', 'Maamoni Bhandar', 'grocery Udaipur Tripura', 'Mirza Bazaar', 'online grocery Gomati', 'grocery delivery Tripura'],
   openGraph: {
-    title: "DesiBasket — Indian Grocery Delivery",
-    description: "Groceries of India, delivered to your door. COD available.",
-    type: "website",
+    title: `${SITE.name} · ${SITE.legalName}`,
+    description: SITE.tagline,
+    type: 'website',
+    images: ['/og-image.jpg'],
   },
-};
+}
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export const viewport: Viewport = {
+  themeColor: '#1c6b34',
+  width: 'device-width',
+  initialScale: 1,
+}
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
-      >
-        {children}
-        <Toaster />
+    <html lang="en">
+      <body className={`${body.variable} ${display.variable} font-sans`}>
+        <Providers>{children}</Providers>
       </body>
     </html>
-  );
+  )
 }

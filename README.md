@@ -1,102 +1,98 @@
-# 🛒 DesiBasket — Indian Grocery E-commerce
+# 🛒 MB Mart · Maamoni Bhandar
 
-A full-featured online grocery store built with **Next.js 16 + TypeScript + Tailwind CSS + shadcn/ui + MongoDB + Cloudinary**.
+**Your Fresh Neighborhood Grocer** — online grocery store for Maamoni Bhandar, Mirza Bazaar, Udaipur, Gomati, Tripura 799105.
+📧 maamonibhandar@gmail.com
 
-Customers can browse 99+ Indian grocery products, add pack-size variants to the cart and place COD/UPI orders. The store owner gets a password-protected admin panel to manage inventory, pricing and orders.
+One Next.js project that deploys to Vercel as both the storefront (frontend) and the API (backend), with **MongoDB** for data and **Cloudinary** for product photos.
 
 ## ✨ Features
 
-### Storefront (Customer)
-- 🎞️ Autoplay hero **banner carousel** + promotional side cards
-- 🗂️ **15 categories** — Rice & Grains, Dals & Pulses, Atta & Flours, Spices & Masala, Oil & Ghee, Dairy & Bread, Dry Fruits & Nuts, Snacks & Biscuits, Beverages, Fresh Produce, Sweets, Personal Care, Household, Pooja Needs, Baby Care
-- 🔍 Live search + category filtering
-- 📦 Product cards with **multi pack-size variants** (e.g. 1 kg / 5 kg — each with its own price, MRP & stock), discount badges, bestseller flags, wishlist
-- 🛒 Cart with bill summary, free delivery over ₹500, **COD / UPI on delivery** checkout, order confirmation
-- ❤️ Wishlist with persistent storage
+### Customer side
+- Home page with hero banners, categories, bestsellers, biggest savings, per-category rows
+- Shop page: search with instant suggestions, category filter, sort (popular, price, discount, newest), in-stock / on-offer filters
+- Product page with pack-size selection, stock status, related products, share previews
+- Cart with free-delivery progress, stock warnings, savings summary
+- **Accounts**: register/login with mobile number or email, profile, change password
+- **Saved addresses** (home/work), default address
+- **Checkout**: choose address, Cash or UPI on delivery, apply coupon, delivery instructions
+- **My orders**: live status tracker, cancel (before packing), re-order, printable invoice
+- Wishlist, contact page, fully responsive with an app-style bottom bar on phones
 
-### Admin Panel (Owner)
-- 🔐 Password login (timing-safe compare, expiring HMAC-signed session cookie)
-- 🖼️ Product photo upload to Cloudinary (falls back to an emoji icon)
-- 📊 Dashboard stats (products, orders, revenue)
-- 🧾 **Inventory & Pricing** — add / edit / delete products, including multi-size variant rows with per-size price, MRP and stock
-- 🚚 **Orders management** — view order items (with variant labels) and update status: Placed → Confirmed → Out for Delivery → Delivered / Cancelled
-- 📉 Stock auto-decrements per variant when an order is placed
+### Admin panel (`/admin`)
+- **Dashboard**: today's sales, 14-day sales chart, orders by status, pending-order alert, low stock, top sellers
+- **Products**: full CRUD, Cloudinary photo upload (drag & drop), multiple pack sizes with their own price/MRP/stock, hide/show, bestseller badge, inline stock editing
+- **Categories**: add / rename / reorder / hide, optional image
+- **Orders**: filter by status, search, one-click status updates (Placed → Confirmed → Packed → Out for delivery → Delivered), cancel with reason (stock returned automatically), payment status, call/WhatsApp customer, print invoice
+- **Customers**: order count & total spent, block/unblock, grant admin access
+- **Coupons**: % or flat, minimum order, max discount, expiry, total & per-customer limits
+- **Store settings**: delivery fee, free-delivery threshold, minimum order, delivery pincodes, open/closed for orders, payment methods, UPI ID, announcement bar, phone/WhatsApp/hours
 
-## 🧱 Tech Stack
+### Business logic
+- Prices are always recalculated on the server; stock is reserved with atomic conditional updates (the last unit can never be sold twice) and rolled back if checkout fails
+- Cancelling an order returns its stock and frees the coupon use
+- COD/UPI orders are marked paid automatically on delivery
+- Sessions are signed cookies; changing a password or blocking a user logs them out everywhere; 5 wrong passwords lock the account for 15 minutes
+- Optional email alerts: new order → store inbox, confirmation & status updates → customer
 
-| Layer      | Tech |
-| ---------- | ---- |
-| Frontend   | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, shadcn/ui, TanStack Query, Zustand |
-| Backend    | Next.js Route Handlers in `src/app/api/*` (run as Vercel serverless functions) |
-| Database   | **MongoDB** (Atlas recommended) via **Mongoose** |
-| Images     | **Cloudinary** (signed direct uploads from the admin panel, auto WebP/AVIF + resizing) |
+## 🧱 Tech stack
 
-One repository = one Vercel project. Vercel builds the storefront as static pages and every
-`/api/*` route as a serverless function, so frontend and backend deploy together on the same domain.
+| Layer | Tech |
+| --- | --- |
+| Frontend | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, shadcn/ui, TanStack Query, Zustand |
+| Backend | Next.js Route Handlers in `src/app/api/*` (Vercel serverless functions), Zod validation |
+| Database | MongoDB (Atlas) via Mongoose |
+| Images | Cloudinary — signed direct uploads, auto WebP/AVIF + resizing |
+| Email | Nodemailer (optional, any SMTP / Gmail app password) |
 
 ## ☁️ Deploy to Vercel
 
-1. **MongoDB Atlas**: create a free cluster, add a database user, and under
-   *Network Access* allow `0.0.0.0/0` (Vercel functions don't have fixed IPs).
-   Copy the connection string (*Connect → Drivers*).
-2. **Cloudinary**: from the Cloudinary console copy *Cloud name*, *API Key* and *API Secret*.
-3. **Vercel**: *Add New → Project* → import this GitHub repo. The framework is auto-detected as Next.js; leave build settings at their defaults.
-4. Under *Environment Variables* add:
+1. **MongoDB Atlas** — create a free cluster and a database user. Under **Network Access** add `0.0.0.0/0` (Vercel has no fixed IPs). Copy the connection string.
+2. **Cloudinary** — copy *Cloud name*, *API Key*, *API Secret* from the dashboard.
+3. **Vercel** — *Add New → Project* → import this repo. Keep the defaults (Next.js preset, root `./`).
+4. Add **Environment Variables**:
 
-| Variable                | Required | Description |
-| ----------------------- | -------- | ----------- |
-| `MONGODB_URI`           | ✅ | MongoDB connection string |
-| `MONGODB_DB`            | optional | Database name (otherwise taken from the URI) |
-| `CLOUDINARY_CLOUD_NAME` | ✅ | Cloudinary cloud name |
-| `CLOUDINARY_API_KEY`    | ✅ | Cloudinary API key |
-| `CLOUDINARY_API_SECRET` | ✅ | Cloudinary API secret (server-only, never sent to the browser) |
-| `CLOUDINARY_FOLDER`     | optional | Upload folder, default `mamonibhandar/products` |
-| `ADMIN_PASSWORD`        | ✅ | Owner panel password (login is disabled in production without it) |
-| `ADMIN_SESSION_SECRET`  | optional | Extra secret for signing admin cookies (`openssl rand -hex 32`) |
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `MONGODB_URI` | ✅ | Atlas connection string |
+| `CLOUDINARY_CLOUD_NAME` | ✅ | |
+| `CLOUDINARY_API_KEY` | ✅ | |
+| `CLOUDINARY_API_SECRET` | ✅ | server-only |
+| `ADMIN_PASSWORD` | ✅ | owner login password |
+| `ADMIN_EMAIL` | optional | owner login email, default `maamonibhandar@gmail.com` |
+| `AUTH_SECRET` | recommended | random string for signing sessions |
+| `NEXT_PUBLIC_SITE_URL` | optional | your live URL (emails, link previews) |
+| `SMTP_USER`, `SMTP_PASS` | optional | enables order emails (Gmail app password) |
+| `MONGODB_DB`, `CLOUDINARY_FOLDER`, `ORDER_NOTIFY_EMAIL` | optional | |
 
-   (`CLOUDINARY_URL=cloudinary://key:secret@cloud` works instead of the three Cloudinary vars.)
-5. **Deploy**. On the first visit the empty database is automatically seeded with the starter catalogue.
+5. **Deploy.** The first visit seeds the starter categories and ~100 products.
+6. Open `/login`, sign in with `ADMIN_EMAIL` + `ADMIN_PASSWORD` → you land in the admin panel. Go to **Store settings** to set your phone, hours, delivery fee and pincodes.
 
-## 💻 Local Development
+## 💻 Local development
 
 ```bash
 npm install
-cp .env.example .env      # fill in MONGODB_URI, Cloudinary keys, ADMIN_PASSWORD
-npm run dev               # http://localhost:3000
+cp .env.example .env    # fill in the values
+npm run dev             # http://localhost:3000
 ```
 
-Optional: `npm run seed` resets the starter products (keeps orders and products you added).
+`npm run seed` resets the starter products (keeps your own products and all orders).
 
-## 🗂️ Project Structure
+## 🗂️ Structure
 
 ```
 src/
 ├── app/
-│   ├── page.tsx                      # storefront + owner panel (client views)
-│   └── api/
-│       ├── products/                 # GET (public) / POST / DELETE (admin)
-│       ├── orders/                   # POST place order (public) · GET / PATCH (admin)
-│       └── admin/
-│           ├── session/              # owner login / logout
-│           └── upload-signature/     # signs Cloudinary uploads (admin)
-├── components/shop/                  # header, hero, product card, cart, admin panel…
+│   ├── (store)/            # storefront: home, shop, product, cart, checkout, account, login…
+│   ├── admin/              # admin panel pages (role-protected)
+│   └── api/                # REST API: auth, account, products, orders, coupons, admin/*
+├── components/
+│   ├── store/              # header, footer, mobile nav, product card, search…
+│   ├── admin/              # admin shell, product form, Cloudinary uploader
+│   └── common/             # shared: order status, invoice, address form…
 └── lib/
-    ├── mongodb.ts                    # cached Mongoose connection (serverless-safe)
-    ├── models.ts                     # Product & Order schemas
-    ├── store.ts                      # data access + race-safe order placement
-    ├── cloudinary.ts                 # upload signing, URL validation, deletes
-    ├── admin.ts                      # owner auth (expiring HMAC-signed cookie)
-    └── catalog.ts                    # starter catalogue seed data
-scripts/seed.ts                       # manual re-seed
+    ├── server/             # MongoDB models, auth, orders, coupons, catalog, stats, mail, cloudinary
+    ├── client/             # fetch helper + React Query hooks
+    ├── validation.ts       # Zod schemas shared by API and forms
+    ├── types.ts            # shared types + order status flow
+    └── site.ts             # business name, address, email
 ```
-
-### How it works
-- **Stock safety**: each order line is reserved with an atomic conditional update
-  (`stock >= qty`); if any line fails the earlier ones are rolled back, so two customers can't buy the last unit.
-- **Images**: the admin's browser asks `/api/admin/upload-signature` for a signature, uploads straight to
-  Cloudinary (no Vercel body-size limit), then saves the returned URL with the product. Replaced or deleted
-  products have their old image removed from Cloudinary.
-
-## 📄 License
-
-MIT — free to use and modify for your own store.

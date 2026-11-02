@@ -1,23 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { checkAdminPassword, makeAdminToken, verifyAdminToken, ADMIN_COOKIE } from '@/lib/admin'
+import {
+  ADMIN_COOKIE,
+  ADMIN_SESSION_SECONDS,
+  checkAdminPassword,
+  isAdminConfigured,
+  isAdminRequest,
+  makeAdminToken,
+} from '@/lib/admin'
 
 export const dynamic = 'force-dynamic'
 
 const COOKIE_OPTS = {
   httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
   path: '/',
-  maxAge: 60 * 60 * 24 * 7,
+  maxAge: ADMIN_SESSION_SECONDS,
 }
 
 export async function GET(req: NextRequest) {
-  return NextResponse.json({ authenticated: verifyAdminToken(req.cookies.get(ADMIN_COOKIE)?.value) })
+  return NextResponse.json({ authenticated: isAdminRequest(req) })
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
+    if (!isAdminConfigured()) {
+      return NextResponse.json({ error: 'Admin login is disabled: ADMIN_PASSWORD is not set on the server.' }, { status: 503 })
+    }
+    const body = await req.json().catch(() => null)
     if (!checkAdminPassword(String(body?.password || ''))) {
+      // small fixed delay slows down password guessing
+      await new Promise((r) => setTimeout(r, 600))
       return NextResponse.json({ error: 'Incorrect password' }, { status: 401 })
     }
     const res = NextResponse.json({ authenticated: true })

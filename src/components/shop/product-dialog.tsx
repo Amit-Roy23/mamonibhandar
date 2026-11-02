@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,8 +9,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
-import { CATEGORIES, type Product, type Variant } from '@/lib/types'
-import { Plus, Trash2, Package } from 'lucide-react'
+import { CATEGORIES, type Product, type ProductImage } from '@/lib/types'
+import { cldImage } from '@/lib/format'
+import { Plus, Trash2, Package, ImagePlus, Loader2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const EMOJI_CHOICES = [
@@ -37,7 +38,30 @@ export interface ProductFormState {
   emoji: string
   description: string
   featured: boolean
+  image: ProductImage | null
   variants: VRow[]
+}
+
+const MAX_IMAGE_MB = 8
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif']
+
+/** Signed direct upload: browser → Cloudinary (the API secret stays on the server). */
+async function uploadToCloudinary(file: File): Promise<ProductImage> {
+  const sigRes = await fetch('/api/admin/upload-signature', { method: 'POST' })
+  const sig = await sigRes.json()
+  if (!sigRes.ok) throw new Error(sig.error || 'Could not start upload')
+
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('api_key', sig.apiKey)
+  fd.append('timestamp', String(sig.timestamp))
+  fd.append('folder', sig.folder)
+  fd.append('signature', sig.signature)
+
+  const up = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`, { method: 'POST', body: fd })
+  const data = await up.json()
+  if (!up.ok) throw new Error(data?.error?.message || 'Image upload failed')
+  return { url: data.secure_url, publicId: data.public_id }
 }
 
 export const emptyProductForm: ProductFormState = {
@@ -50,6 +74,7 @@ export const emptyProductForm: ProductFormState = {
   emoji: '🛒',
   description: '',
   featured: false,
+  image: null,
   variants: [],
 }
 
@@ -65,6 +90,7 @@ export function productToForm(p: Product): ProductFormState {
     emoji: p.emoji,
     description: p.description,
     featured: p.featured,
+    image: p.image || null,
     variants: (p.variants || []).map((v) => ({
       label: v.label,
       price: String(v.price),
@@ -103,7 +129,9 @@ export function ProductDialog({
   onSaved: () => void
 }) {
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [local, setLocal] = useState<ProductFormState>(emptyProductForm)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => setLocal(form), [form, open])
 
@@ -123,6 +151,22 @@ export function ProductDialog({
 
   function removeVRow(i: number) {
     setLocal((s) => ({ ...s, variants: s.variants.filter((_, idx) => idx !== i) }))
+  }
+
+  async function onPickImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow re-picking the same file
+    if (!file) return
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) return alert('Please choose a JPG, PNG, WebP or AVIF image')
+    if (file.size > MAX_IMAGE_MB * 1024 * 1024) return alert(`Image must be smaller than ${MAX_IMAGE_MB} MB`)
+    setUploading(true)
+    try {
+      set('image', await uploadToCloudinary(file))
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Image upload failed')
+    } finally {
+      setUploading(false)
+    }
   }
 
   async function submit() {
@@ -145,6 +189,7 @@ export function ProductDialog({
           emoji: local.emoji,
           description: local.description,
           featured: local.featured,
+          image: local.image,
           variants: variants.length >= 2
             ? variants.map((v) => ({
                 label: v.label,
@@ -207,6 +252,37 @@ export function ProductDialog({
                   </div>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* -------- Product photo (Cloudinary) -------- */}
+          <div className="flex items-center gap-3 rounded-xl border border-stone-200 p-3">
+            <div className="relative grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-lg bg-stone-100 text-3xl">
+              {local.image ? (
+                <img src={cldImage(local.image.url, 160)} alt="Product" className="h-full w-full object-contain p-1" />
+              ) : (
+                <span aria-hidden>{local.emoji}</span>
+              )}
+              {uploading && (
+                <span className="absolute inset-0 grid place-items-center bg-white/70">
+                  <Loader2 className="h-5 w-5 animate-spin text-green-700" />
+                </span>
+              )}
+            </div>
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <p className="text-sm font-semibold text-stone-800">Product photo</p>
+              <p className="text-xs text-stone-500">JPG, PNG or WebP up to {MAX_IMAGE_MB} MB. Without a photo, the icon is shown.</p>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" size="sm" variant="outline" className="gap-1 rounded-lg" disabled={uploading} onClick={() => fileRef.current?.click()}>
+                  <ImagePlus className="h-3.5 w-3.5" /> {local.image ? 'Change photo' : 'Upload photo'}
+                </Button>
+                {local.image && (
+                  <Button type="button" size="sm" variant="ghost" className="gap-1 rounded-lg text-stone-500 hover:text-red-600" disabled={uploading} onClick={() => set('image', null)}>
+                    <X className="h-3.5 w-3.5" /> Remove
+                  </Button>
+                )}
+              </div>
+              <input ref={fileRef} type="file" accept={ACCEPTED_IMAGE_TYPES.join(',')} className="hidden" onChange={onPickImage} />
             </div>
           </div>
 
@@ -306,7 +382,7 @@ export function ProductDialog({
 
         <div className="flex gap-2">
           <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button className="flex-1 bg-green-600 hover:bg-green-700" onClick={submit} disabled={saving}>
+          <Button className="flex-1 bg-green-600 hover:bg-green-700" onClick={submit} disabled={saving || uploading}>
             {saving ? 'Saving…' : local.id ? 'Update Product' : 'Add to Store'}
           </Button>
         </div>

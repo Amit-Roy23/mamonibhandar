@@ -1,6 +1,6 @@
 # 🛒 DesiBasket — Indian Grocery E-commerce
 
-A full-featured online grocery store built with **Next.js 16 + TypeScript + Tailwind CSS + shadcn/ui + Prisma (SQLite)**.
+A full-featured online grocery store built with **Next.js 16 + TypeScript + Tailwind CSS + shadcn/ui + MongoDB + Cloudinary**.
 
 Customers can browse 99+ Indian grocery products, add pack-size variants to the cart and place COD/UPI orders. The store owner gets a password-protected admin panel to manage inventory, pricing and orders.
 
@@ -15,59 +15,87 @@ Customers can browse 99+ Indian grocery products, add pack-size variants to the 
 - ❤️ Wishlist with persistent storage
 
 ### Admin Panel (Owner)
-- 🔐 Password login (timing-safe compare, HMAC-signed session cookie)
+- 🔐 Password login (timing-safe compare, expiring HMAC-signed session cookie)
+- 🖼️ Product photo upload to Cloudinary (falls back to an emoji icon)
 - 📊 Dashboard stats (products, orders, revenue)
 - 🧾 **Inventory & Pricing** — add / edit / delete products, including multi-size variant rows with per-size price, MRP and stock
-- 🚚 **Orders management** — view order items (with variant labels) and update status: Placed → Confirmed → Shipped → Delivered / Cancelled
+- 🚚 **Orders management** — view order items (with variant labels) and update status: Placed → Confirmed → Out for Delivery → Delivered / Cancelled
 - 📉 Stock auto-decrements per variant when an order is placed
 
-## 🚀 Getting Started
+## 🧱 Tech Stack
 
-```bash
-# 1. install dependencies
-bun install        # or npm install
+| Layer      | Tech |
+| ---------- | ---- |
+| Frontend   | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, shadcn/ui, TanStack Query, Zustand |
+| Backend    | Next.js Route Handlers in `src/app/api/*` (run as Vercel serverless functions) |
+| Database   | **MongoDB** (Atlas recommended) via **Mongoose** |
+| Images     | **Cloudinary** (signed direct uploads from the admin panel, auto WebP/AVIF + resizing) |
 
-# 2. configure environment
-cp .env.example .env   # then edit values (see below)
-
-# 3. push the database schema
-bunx prisma db push    # or: bun run db:push
-
-# 4. run the dev server
-bun run dev            # http://localhost:3000
-```
-
-### Environment variables
-
-| Variable         | Required | Description                                                        |
-| ---------------- | -------- | ------------------------------------------------------------------ |
-| `DATABASE_URL`   | ✅       | SQLite connection string, e.g. `file:./db/custom.db`                |
-| `REMOTE_DB_URL`  | optional | External JSON blob store URL (used on serverless hosts like Vercel) |
-| `ADMIN_PASSWORD` | optional | Admin panel password (defaults to `admin123` in dev)                |
+One repository = one Vercel project. Vercel builds the storefront as static pages and every
+`/api/*` route as a serverless function, so frontend and backend deploy together on the same domain.
 
 ## ☁️ Deploy to Vercel
 
-1. Push this repository to GitHub
-2. Import the project in [Vercel](https://vercel.com/new)
-3. Set the environment variables (`DATABASE_URL`, `REMOTE_DB_URL`, `ADMIN_PASSWORD`)
-4. Deploy 🎉
+1. **MongoDB Atlas**: create a free cluster, add a database user, and under
+   *Network Access* allow `0.0.0.0/0` (Vercel functions don't have fixed IPs).
+   Copy the connection string (*Connect → Drivers*).
+2. **Cloudinary**: from the Cloudinary console copy *Cloud name*, *API Key* and *API Secret*.
+3. **Vercel**: *Add New → Project* → import this GitHub repo. The framework is auto-detected as Next.js; leave build settings at their defaults.
+4. Under *Environment Variables* add:
+
+| Variable                | Required | Description |
+| ----------------------- | -------- | ----------- |
+| `MONGODB_URI`           | ✅ | MongoDB connection string |
+| `MONGODB_DB`            | optional | Database name (otherwise taken from the URI) |
+| `CLOUDINARY_CLOUD_NAME` | ✅ | Cloudinary cloud name |
+| `CLOUDINARY_API_KEY`    | ✅ | Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | ✅ | Cloudinary API secret (server-only, never sent to the browser) |
+| `CLOUDINARY_FOLDER`     | optional | Upload folder, default `mamonibhandar/products` |
+| `ADMIN_PASSWORD`        | ✅ | Owner panel password (login is disabled in production without it) |
+| `ADMIN_SESSION_SECRET`  | optional | Extra secret for signing admin cookies (`openssl rand -hex 32`) |
+
+   (`CLOUDINARY_URL=cloudinary://key:secret@cloud` works instead of the three Cloudinary vars.)
+5. **Deploy**. On the first visit the empty database is automatically seeded with the starter catalogue.
+
+## 💻 Local Development
+
+```bash
+npm install
+cp .env.example .env      # fill in MONGODB_URI, Cloudinary keys, ADMIN_PASSWORD
+npm run dev               # http://localhost:3000
+```
+
+Optional: `npm run seed` resets the starter products (keeps orders and products you added).
 
 ## 🗂️ Project Structure
 
 ```
 src/
 ├── app/
-│   ├── page.tsx              # storefront + admin (single-page views)
+│   ├── page.tsx                      # storefront + owner panel (client views)
 │   └── api/
-│       ├── products/         # GET / POST / DELETE products
-│       ├── orders/           # place + manage orders
-│       └── admin/session/    # admin auth
-├── components/shop/          # header, hero, category grid, product card, cart, admin panel…
-├── lib/                      # catalog seed data, store drivers, cart state, admin auth
-prisma/schema.prisma          # Product / Order models (SQLite)
-scripts/                      # reseed + cleanup utilities
-public/banners/               # AI-generated promo banners (no branding)
+│       ├── products/                 # GET (public) / POST / DELETE (admin)
+│       ├── orders/                   # POST place order (public) · GET / PATCH (admin)
+│       └── admin/
+│           ├── session/              # owner login / logout
+│           └── upload-signature/     # signs Cloudinary uploads (admin)
+├── components/shop/                  # header, hero, product card, cart, admin panel…
+└── lib/
+    ├── mongodb.ts                    # cached Mongoose connection (serverless-safe)
+    ├── models.ts                     # Product & Order schemas
+    ├── store.ts                      # data access + race-safe order placement
+    ├── cloudinary.ts                 # upload signing, URL validation, deletes
+    ├── admin.ts                      # owner auth (expiring HMAC-signed cookie)
+    └── catalog.ts                    # starter catalogue seed data
+scripts/seed.ts                       # manual re-seed
 ```
+
+### How it works
+- **Stock safety**: each order line is reserved with an atomic conditional update
+  (`stock >= qty`); if any line fails the earlier ones are rolled back, so two customers can't buy the last unit.
+- **Images**: the admin's browser asks `/api/admin/upload-signature` for a signature, uploads straight to
+  Cloudinary (no Vercel body-size limit), then saves the returned URL with the product. Replaced or deleted
+  products have their old image removed from Cloudinary.
 
 ## 📄 License
 

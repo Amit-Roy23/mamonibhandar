@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { ProductDialog, emptyProductForm, productToForm, type ProductFormState } from './product-dialog'
+import { ProductImage } from './product-image'
 import { formatINR } from '@/lib/format'
 import { type Order, type Product } from '@/lib/types'
 import {
@@ -278,7 +279,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     <TableRow key={p.id}>
                       <TableCell className="pl-4">
                         <div className="flex items-center gap-2.5">
-                          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-stone-100 text-xl" aria-hidden>{p.emoji}</span>
+                          <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-stone-100 text-xl" aria-hidden>
+                            <ProductImage product={p} width={40} className="p-0.5" />
+                          </span>
                           <div className="min-w-0">
                             <p className="max-w-52 truncate font-semibold text-stone-800">
                               {p.name} {p.featured && '⭐'}

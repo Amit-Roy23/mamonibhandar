@@ -1,12 +1,9 @@
 import type { NextConfig } from "next";
 
+// Vercel builds this one Next.js project into static pages (frontend) and
+// serverless functions for everything under src/app/api (backend).
 const nextConfig: NextConfig = {
-  output: "standalone",
-  /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  reactStrictMode: false,
+  reactStrictMode: true,
 };
 
 export default nextConfig;

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { ProductImage } from './product-image'
 import { formatINR, discountPct } from '@/lib/format'
 import { CATEGORY_TINTS, cartKey, hasVariants, linePrice, BASE_VARIANT_ID, type Product } from '@/lib/types'
 import { useCart, useWishlist } from '@/lib/cart-store'
@@ -44,13 +45,12 @@ export function ProductCard({ product }: { product: Product }) {
       className="group relative flex flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm hover:shadow-md"
     >
       <div className={cn('relative grid h-28 place-items-center sm:h-32', tint)}>
-        <span
-          className={cn('select-none text-5xl transition-transform group-hover:scale-110 sm:text-6xl', out && 'opacity-40 grayscale')}
-          role="img"
-          aria-label={product.name}
-        >
-          {product.emoji}
-        </span>
+        <ProductImage
+          product={product}
+          width={200}
+          className={cn('p-2 transition-transform group-hover:scale-105', out && 'opacity-40 grayscale')}
+          emojiClassName={cn('text-5xl transition-transform group-hover:scale-110 sm:text-6xl', out && 'opacity-40 grayscale')}
+        />
         {off > 0 && !out && (
           <Badge className="absolute left-2 top-2 bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white hover:bg-orange-500">
             {off}% OFF

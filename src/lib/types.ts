@@ -6,6 +6,11 @@ export interface Variant {
   stock: number
 }
 
+export interface ProductImage {
+  url: string
+  publicId: string
+}
+
 export interface Product {
   id: string
   name: string
@@ -17,6 +22,7 @@ export interface Product {
   stock: number
   emoji: string
   featured: boolean
+  image?: ProductImage | null // Cloudinary image (falls back to emoji when absent)
   variants?: Variant[] // multi pack-size options (optional for backward compat)
   createdAt: string
 }
@@ -27,6 +33,7 @@ export interface OrderItem {
   price: number
   unit: string
   emoji: string
+  image?: string
   variantId?: string
   qty: number
 }
@@ -44,11 +51,6 @@ export interface Order {
   paymentMethod: string
   status: OrderStatus
   createdAt: string
-}
-
-export interface DbData {
-  products: Product[]
-  orders: Order[]
 }
 
 export const FREE_DELIVERY_ABOVE = 499

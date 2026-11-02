@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Minus, Plus, Trash2, ShoppingBasket, PartyPopper, Wallet, Banknote } from 'lucide-react'
+import { ProductImage } from './product-image'
 import { formatINR } from '@/lib/format'
 import {
   DELIVERY_FEE, FREE_DELIVERY_ABOVE, cartKey, linePrice, parseCartKey,
@@ -107,8 +108,8 @@ export function CartSheet({ products }: { products: Product[] }) {
               <div className="max-h-72 overflow-y-auto px-4 py-2">
                 {lines.map(({ key, p, qty, info }) => (
                   <div key={key} className="flex items-center gap-3 border-b border-stone-100 py-3 last:border-0">
-                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-stone-100 text-2xl" aria-hidden>
-                      {p.emoji}
+                    <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-stone-100 text-2xl" aria-hidden>
+                      <ProductImage product={p} width={48} className="p-1" />
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-stone-800">{p.name}</p>

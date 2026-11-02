@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+db
+dev.log
+server.log
+.zscripts
+.zsetup
+tests
+examples
+download
+scripts
+Caddyfile
+worklog.md
+.vercel
+*.log

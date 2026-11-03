@@ -2,7 +2,6 @@ import { revalidateTag, unstable_cache } from 'next/cache'
 import { connectDB } from './mongodb'
 import { BannerModel, CategoryModel, ProductModel, SettingsModel, type BannerDoc, type CategoryDoc, type ProductDoc, type SettingsDoc } from './models'
 import { toBanner, toCategory, toProduct } from './mappers'
-import { buildSeedProducts, demoProductImage } from '../catalog'
 import { DEFAULT_BANNERS, DEFAULT_CATEGORIES, demoCategoryImage, slugify } from '../site'
 import { getSettings } from './settings'
 import { ApiError } from './http'
@@ -47,14 +46,14 @@ export const getStorefront = unstable_cache(loadStorefront, ['storefront-v2'], {
 /* Seeding + data migrations                                          */
 /* ================================================================== */
 
-const DATA_VERSION = 3
+const DATA_VERSION = 4
 let seeded = false
 
 function isDupOnly(e: any) {
   return e?.code === 11000 || (Array.isArray(e?.writeErrors) && e.writeErrors.every((w: any) => (w?.code ?? w?.err?.code) === 11000))
 }
 
-/** Populate starter data the first time, and upgrade data saved by older versions. */
+/** Create starter categories/banners the first time, and upgrade data saved by older versions. Products are never auto-created. */
 export async function ensureSeeded(): Promise<void> {
   if (seeded) return
   await connectDB()
@@ -65,20 +64,10 @@ export async function ensureSeeded(): Promise<void> {
   }
 
   try {
-    const [catCount, prodCount, bannerCount] = await Promise.all([
-      CategoryModel.estimatedDocumentCount(),
-      ProductModel.estimatedDocumentCount(),
-      BannerModel.estimatedDocumentCount(),
-    ])
+    const [catCount, bannerCount] = await Promise.all([CategoryModel.estimatedDocumentCount(), BannerModel.estimatedDocumentCount()])
     if (catCount === 0) {
       await CategoryModel.insertMany(
         DEFAULT_CATEGORIES.map((c, i) => ({ _id: slugify(c.name), name: c.name, emoji: c.emoji, image: demoCategoryImage(slugify(c.name)), sortOrder: i, active: true })),
-        { ordered: false }
-      )
-    }
-    if (prodCount === 0) {
-      await ProductModel.insertMany(
-        buildSeedProducts().map(({ id, createdAt, ...rest }) => ({ _id: id, ...rest, variants: rest.variants || [] })),
         { ordered: false }
       )
     }
@@ -96,18 +85,19 @@ export async function ensureSeeded(): Promise<void> {
     ProductModel.updateMany({ soldCount: { $exists: false } }, { $set: { soldCount: 0 } }),
     // multi-size stock is always the sum of its sizes
     ProductModel.updateMany({ 'variants.0': { $exists: true } }, [{ $set: { stock: { $sum: '$variants.stock' } } }]),
-    // bundled demo photos for starter products / categories that have none
-    ProductModel.bulkWrite(
-      buildSeedProducts().map((p) => ({
-        updateOne: { filter: { _id: p.id, $or: [{ image: null }, { image: { $exists: false } }] }, update: { $set: { image: demoProductImage(p.id) } } },
-      }))
-    ),
+    // bundled artwork for starter categories that have no image
     CategoryModel.bulkWrite(
       DEFAULT_CATEGORIES.map((c) => ({
         updateOne: { filter: { _id: slugify(c.name), $or: [{ image: null }, { image: { $exists: false } }] }, update: { $set: { image: demoCategoryImage(slugify(c.name)) } } },
       }))
     ),
   ])
+  // v4: remove the demo products created by earlier versions (ids seed_001…seed_099).
+  // A demo product the owner has already given their own uploaded photo is kept.
+  await ProductModel.deleteMany({
+    _id: { $regex: /^seed_\d{3}$/ },
+    $or: [{ image: null }, { image: { $exists: false } }, { 'image.publicId': { $regex: /^demo\// } }],
+  })
   // v3: build indexes once (autoIndex is off in production to keep cold starts fast)
   const { UserModel, OrderModel, CouponModel } = await import('./models')
   await Promise.all([UserModel, OrderModel, CouponModel, ProductModel, CategoryModel, BannerModel].map((m) => m.createIndexes().catch((e) => console.error('createIndexes', m.modelName, e))))

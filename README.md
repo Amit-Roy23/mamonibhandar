@@ -65,7 +65,7 @@ One Next.js project that deploys to Vercel as both the storefront (frontend) and
 | `SMTP_USER`, `SMTP_PASS` | optional | enables order emails (Gmail app password) |
 | `MONGODB_DB`, `CLOUDINARY_FOLDER`, `ORDER_NOTIFY_EMAIL` | optional | |
 
-5. **Deploy.** The first visit seeds the starter categories, ~100 demo products with demo photos, and the home banners. Data saved by older versions of the app is upgraded automatically.
+5. **Deploy.** The first visit creates the starter categories and home banners (no products — add your own in **Admin → Products**). Data saved by older versions is upgraded automatically, and demo products from earlier versions are removed.
 6. Open `/login`, sign in with `ADMIN_EMAIL` + `ADMIN_PASSWORD` → you land in the admin panel. Go to **Store settings** to set your phone, hours, delivery fee and pincodes.
 
 ### ⚡ Speed tip — put the server next to the database
@@ -83,11 +83,10 @@ cp .env.example .env    # fill in the values
 npm run dev             # http://localhost:3000
 ```
 
-`npm run seed` resets the starter products (keeps your own products and all orders).
 
 ## 🖼️ Demo images
 
-The starter products, categories and two offer cards use generated illustrations in `public/demo/`, built from
+The starter categories and two offer cards use generated illustrations in `public/demo/`, built from
 [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji) (MIT licence). Replace any of them by uploading a real
 photo in the admin panel; uploads go to Cloudinary. The hero photos live in `public/banners/`.
 

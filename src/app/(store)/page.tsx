@@ -3,7 +3,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useMemo } from 'react'
-import { BadgeIndianRupee, Leaf, MapPin, ShieldCheck, Truck, Mail, Clock } from 'lucide-react'
+import { BadgeIndianRupee, Leaf, MapPin, ShieldCheck, Truck, Mail, Clock, PackageOpen } from 'lucide-react'
+import { EmptyState } from '@/components/common/empty-state'
 import { ProductRail, SectionHeader } from '@/components/store/section'
 import { useBanners, useCategories, useProducts, useSettings } from '@/lib/client/hooks'
 import { HeroCarousel, PromoCard } from '@/components/store/banners'
@@ -81,6 +82,16 @@ export default function HomePage() {
             : categories.map((c, i) => <CategoryTile key={c.id} category={c} count={counts.get(c.name) || 0} index={i} />)}
         </div>
       </section>
+
+      {!isLoading && products.length === 0 && (
+        <section className="mx-auto max-w-7xl px-4 sm:px-6">
+          <EmptyState
+            icon={<PackageOpen className="h-8 w-8" />}
+            title="Fresh stock is on its way"
+            text={`We're adding products to the online store right now. Meanwhile, visit us at ${SITE.address.line1}, ${SITE.address.city} or email ${SITE.email}.`}
+          />
+        </section>
+      )}
 
       <ProductRail title="Bestsellers" subtitle="What Udaipur is buying this week" href="/shop?sort=popular" products={bestsellers} loading={isLoading} />
 

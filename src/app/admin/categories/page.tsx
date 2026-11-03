@@ -97,7 +97,7 @@ export default function CategoriesPage() {
               <label className="block space-y-1.5"><span className="text-sm font-semibold">Emoji icon</span><input className="h-11 w-full rounded-xl border border-border px-3.5 text-lg outline-none focus:border-brand-400" value={form.emoji} maxLength={8} onChange={(e) => setForm({ ...form, emoji: e.target.value })} /></label>
               <label className="block space-y-1.5"><span className="text-sm font-semibold">Display order</span><input className="h-11 w-full rounded-xl border border-border px-3.5 text-sm outline-none focus:border-brand-400" inputMode="numeric" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: e.target.value.replace(/\D/g, '') })} /></label>
             </div>
-            <ImageUploader label="Category image (optional)" value={form.image} onChange={(v) => setForm({ ...form, image: v })} fallback={form.emoji} className="max-w-56" />
+            <ImageUploader label="Category photo — square, e.g. 800 × 800" value={form.image} onChange={(v) => setForm({ ...form, image: v })} fallback={form.emoji} className="max-w-56" />
             <label className="flex items-center justify-between"><span className="text-sm font-semibold">Visible in store</span><Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} /></label>
             <button onClick={save} disabled={saving} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-700 font-bold text-white hover:bg-brand-800 disabled:opacity-60">{saving && <Loader2 className="h-4 w-4 animate-spin" />} Save category</button>
           </div>

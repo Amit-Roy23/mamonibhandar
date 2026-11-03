@@ -45,6 +45,7 @@ export function StoreFooter() {
               <li><Link href="/wishlist" className="hover:text-leaf-300">Wishlist</Link></li>
               <li><Link href="/contact" className="hover:text-leaf-300">Contact us</Link></li>
               <li><Link href="/contact#delivery" className="hover:text-leaf-300">Delivery & returns</Link></li>
+              <li><Link href="/login?next=/admin" className="hover:text-leaf-300">Owner / Admin login</Link></li>
             </ul>
           </div>
 

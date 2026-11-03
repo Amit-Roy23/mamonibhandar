@@ -22,6 +22,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const params = useSearchParams()
   const qc = useQueryClient()
   const next = safeNext(params.get('next'))
+  const adminLogin = mode === 'login' && !!next?.startsWith('/admin')
   const [form, setForm] = useState({ name: '', phone: '', email: '', identifier: '', password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [show, setShow] = useState(false)
@@ -84,15 +85,15 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
       </div>
 
       <div className="rounded-[2rem] bg-white p-6 ring-1 ring-border sm:p-10">
-        <h1 className="text-2xl font-extrabold sm:text-3xl">{mode === 'login' ? 'Log in' : 'Create your account'}</h1>
+        <h1 className="text-2xl font-extrabold sm:text-3xl">{adminLogin ? 'Owner / Admin login' : mode === 'login' ? 'Log in' : 'Create your account'}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {mode === 'login' ? 'Use your mobile number or email.' : 'It takes less than a minute.'}
+          {adminLogin ? 'Sign in with the store email and the admin password set on the server.' : mode === 'login' ? 'Use your mobile number or email.' : 'It takes less than a minute.'}
         </p>
         <form onSubmit={submit} className="mt-6 space-y-4" noValidate>
           {mode === 'register' && input('name', 'Full name', { autoComplete: 'name', placeholder: 'Your name' })}
           {mode === 'register' && input('phone', 'Mobile number', { autoComplete: 'tel', inputMode: 'tel', placeholder: '10-digit mobile number' })}
           {mode === 'register' && input('email', 'Email (optional)', { autoComplete: 'email', type: 'email', placeholder: 'For order updates' })}
-          {mode === 'login' && input('identifier', 'Mobile number or email', { autoComplete: 'username', placeholder: '98xxxxxxxx or you@email.com' })}
+          {mode === 'login' && input('identifier', adminLogin ? 'Admin email' : 'Mobile number or email', { autoComplete: 'username', placeholder: adminLogin ? 'maamonibhandar@gmail.com' : '98xxxxxxxx or you@email.com' })}
           <div className="space-y-1.5">
             <label htmlFor="auth-password" className="text-sm font-semibold">Password</label>
             <div className="relative">
@@ -117,7 +118,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
             {mode === 'login' ? 'Log in' : 'Create account'}
           </button>
         </form>
-        <p className="mt-6 text-center text-sm text-muted-foreground">
+        <p className={cn('mt-6 text-center text-sm text-muted-foreground', adminLogin && 'hidden')}>
           {mode === 'login' ? "New to MB Mart? " : 'Already have an account? '}
           <Link href={`/${mode === 'login' ? 'register' : 'login'}${next ? `?next=${encodeURIComponent(next)}` : ''}`} className="font-bold text-brand-700 hover:underline">
             {mode === 'login' ? 'Create an account' : 'Log in'}

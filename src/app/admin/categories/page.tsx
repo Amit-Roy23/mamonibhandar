@@ -91,13 +91,12 @@ export default function CategoriesPage() {
         <DialogContent className="max-h-[92vh] overflow-y-auto rounded-3xl sm:max-w-md">
           <DialogHeader><DialogTitle className="font-display">{editing ? 'Edit category' : 'New category'}</DialogTitle></DialogHeader>
           <div className="grid gap-4">
-            <label className="block space-y-1.5"><span className="text-sm font-semibold">Name</span><input className="h-11 w-full rounded-xl border border-border px-3.5 text-sm outline-none focus:border-brand-400" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
-            {editing && editing.name !== form.name && <p className="-mt-2 text-xs text-saffron-700">Products in this category will move to the new name automatically.</p>}
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block space-y-1.5"><span className="text-sm font-semibold">Emoji icon</span><input className="h-11 w-full rounded-xl border border-border px-3.5 text-lg outline-none focus:border-brand-400" value={form.emoji} maxLength={8} onChange={(e) => setForm({ ...form, emoji: e.target.value })} /></label>
-              <label className="block space-y-1.5"><span className="text-sm font-semibold">Display order</span><input className="h-11 w-full rounded-xl border border-border px-3.5 text-sm outline-none focus:border-brand-400" inputMode="numeric" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: e.target.value.replace(/\D/g, '') })} /></label>
+            <div className="grid grid-cols-[1fr_110px] gap-3">
+              <label className="block space-y-1.5"><span className="text-sm font-semibold">Name</span><input className="h-11 w-full rounded-xl border border-border px-3.5 text-sm outline-none focus:border-brand-400" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
+              <label className="block space-y-1.5"><span className="text-sm font-semibold">Order</span><input className="h-11 w-full rounded-xl border border-border px-3.5 text-sm outline-none focus:border-brand-400" inputMode="numeric" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: e.target.value.replace(/\D/g, '') })} aria-label="Display order" /></label>
             </div>
-            <ImageUploader label="Category photo — square, e.g. 800 × 800" value={form.image} onChange={(v) => setForm({ ...form, image: v })} fallback={form.emoji} className="max-w-56" />
+            {editing && editing.name !== form.name && <p className="-mt-2 text-xs text-saffron-700">Products in this category will move to the new name automatically.</p>}
+            <ImageUploader label="Category photo — square, e.g. 800 × 800" value={form.image} onChange={(v) => setForm({ ...form, image: v })} className="max-w-64" />
             <label className="flex items-center justify-between"><span className="text-sm font-semibold">Visible in store</span><Switch checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} /></label>
             <button onClick={save} disabled={saving} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-700 font-bold text-white hover:bg-brand-800 disabled:opacity-60">{saving && <Loader2 className="h-4 w-4 animate-spin" />} Save category</button>
           </div>

@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { Suspense } from 'react'
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { Heart, LayoutDashboard, LogOut, MapPin, Package, ShoppingBag, Truck, User as UserIcon, UserRound, Mail } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Heart, LayoutDashboard, LogOut, MapPin, Package, ShoppingBag, Truck, User as UserIcon, UserRound, Mail } from 'lucide-react'
 import { Logo } from '@/components/common/logo'
 import { SearchBox } from './search-box'
 import { CategoryArt } from './category-tile'
@@ -96,21 +96,73 @@ function CategoryStrip() {
   const pathname = usePathname()
   const params = useSearchParams()
   const current = pathname === '/shop' ? params.get('category') : null
+  const track = useRef<HTMLDivElement>(null)
+  const [edges, setEdges] = useState({ left: false, right: false })
+
+  // show an arrow only when there is more to scroll in that direction
+  const measure = useCallback(() => {
+    const el = track.current
+    if (!el) return
+    setEdges({ left: el.scrollLeft > 4, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4 })
+  }, [])
+
+  useEffect(() => {
+    const el = track.current
+    if (!el) return
+    measure()
+    el.addEventListener('scroll', measure, { passive: true })
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => {
+      el.removeEventListener('scroll', measure)
+      ro.disconnect()
+    }
+  }, [measure, categories.length])
+
+  // keep the selected category visible
+  useEffect(() => {
+    track.current?.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' })
+  }, [current, categories.length])
+
+  const scrollBy = (dir: 1 | -1) => track.current?.scrollBy({ left: dir * track.current.clientWidth * 0.75, behavior: 'smooth' })
+
   return (
     <nav className="hidden border-t border-border/70 md:block" aria-label="Categories">
-      <div className="no-scrollbar mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 py-2 sm:px-6">
-        <Link href="/shop" className={cn('shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold transition', pathname === '/shop' && !current ? 'bg-brand-700 text-white' : 'text-ink/80 hover:bg-cream')}>
-          All products
-        </Link>
-        {categories.map((c) => (
+      <div className="relative mx-auto max-w-7xl">
+        <div ref={track} className="no-scrollbar flex gap-1 overflow-x-auto scroll-smooth px-4 py-2 sm:px-6">
           <Link
-            key={c.id}
-            href={`/shop?category=${encodeURIComponent(c.name)}`}
-            className={cn('flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition', current === c.name ? 'bg-brand-700 text-white' : 'text-ink/80 hover:bg-cream')}
+            href="/shop"
+            aria-current={pathname === '/shop' && !current ? 'page' : undefined}
+            className={cn('shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold transition', pathname === '/shop' && !current ? 'bg-brand-700 text-white' : 'text-ink/80 hover:bg-cream')}
           >
-            <CategoryArt category={c} size={22} /> {c.name}
+            All products
           </Link>
-        ))}
+          {categories.map((c) => (
+            <Link
+              key={c.id}
+              href={`/shop?category=${encodeURIComponent(c.name)}`}
+              aria-current={current === c.name ? 'page' : undefined}
+              className={cn('flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition', current === c.name ? 'bg-brand-700 text-white' : 'text-ink/80 hover:bg-cream')}
+            >
+              <CategoryArt category={c} size={22} /> {c.name}
+            </Link>
+          ))}
+        </div>
+
+        {edges.left && (
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex w-24 items-center bg-gradient-to-r from-white via-white/90 to-transparent pl-2 sm:pl-4">
+            <button onClick={() => scrollBy(-1)} className="pointer-events-auto grid h-8 w-8 place-items-center rounded-full bg-white text-ink shadow-md ring-1 ring-border transition hover:bg-brand-700 hover:text-white" aria-label="Previous categories">
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+        {edges.right && (
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex w-24 items-center justify-end bg-gradient-to-l from-white via-white/90 to-transparent pr-2 sm:pr-4">
+            <button onClick={() => scrollBy(1)} className="pointer-events-auto grid h-8 w-8 place-items-center rounded-full bg-white text-ink shadow-md ring-1 ring-border transition hover:bg-brand-700 hover:text-white" aria-label="More categories">
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
       </div>
     </nav>
   )

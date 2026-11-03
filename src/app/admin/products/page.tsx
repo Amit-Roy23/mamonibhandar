@@ -47,7 +47,7 @@ export default function AdminProductsPage() {
 
   function refresh() {
     qc.invalidateQueries({ queryKey: ['admin-products'] })
-    qc.invalidateQueries({ queryKey: ['products'] })
+    qc.invalidateQueries({ queryKey: ['storefront'] })
     qc.invalidateQueries({ queryKey: ['admin-stats'] })
   }
 

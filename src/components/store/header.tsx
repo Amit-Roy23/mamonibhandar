@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { Heart, LayoutDashboard, LogOut, MapPin, Package, ShoppingBag, Truck, User as UserIcon, UserRound, Mail } from 'lucide-react'
 import { Logo } from '@/components/common/logo'
 import { SearchBox } from './search-box'
+import { CategoryArt } from './category-tile'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -107,7 +108,7 @@ function CategoryStrip() {
             href={`/shop?category=${encodeURIComponent(c.name)}`}
             className={cn('flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition', current === c.name ? 'bg-brand-700 text-white' : 'text-ink/80 hover:bg-cream')}
           >
-            <span aria-hidden>{c.emoji}</span> {c.name}
+            <CategoryArt category={c} size={22} /> {c.name}
           </Link>
         ))}
       </div>

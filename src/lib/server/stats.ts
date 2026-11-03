@@ -52,8 +52,8 @@ export async function getDashboardStats(days = 14): Promise<DashboardStats> {
     UserModel.countDocuments({ role: 'customer' }),
     ProductModel.countDocuments({}),
     OrderModel.find().sort({ createdAt: -1 }).limit(8).lean<OrderDoc[]>(),
-    ProductModel.find({ active: true, stock: { $lte: LOW_STOCK } }).sort({ stock: 1 }).limit(8).lean<ProductDoc[]>(),
-    ProductModel.countDocuments({ active: true, stock: { $lte: LOW_STOCK } }),
+    ProductModel.find({ active: { $ne: false }, stock: { $lte: LOW_STOCK } }).sort({ stock: 1 }).limit(8).lean<ProductDoc[]>(),
+    ProductModel.countDocuments({ active: { $ne: false }, stock: { $lte: LOW_STOCK } }),
     ProductModel.find({ soldCount: { $gt: 0 } }).sort({ soldCount: -1 }).limit(5).lean<ProductDoc[]>(),
   ])
 

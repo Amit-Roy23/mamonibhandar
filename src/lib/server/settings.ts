@@ -15,5 +15,8 @@ export async function getSettings(): Promise<StoreSettings> {
 export async function updateSettings(patch: Partial<StoreSettings>): Promise<StoreSettings> {
   await connectDB()
   await SettingsModel.updateOne({ _id: 'store' }, { $set: patch }, { upsert: true, runValidators: true })
+  // lazy import avoids a settings ⇄ catalog import cycle
+  const { invalidateStorefront } = await import('./catalog')
+  invalidateStorefront()
   return getSettings()
 }

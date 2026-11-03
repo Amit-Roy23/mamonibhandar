@@ -4,6 +4,7 @@ import { toOrder } from './mappers'
 import { ApiError } from './http'
 import { getSettings } from './settings'
 import { checkCoupon, releaseCoupon, reserveCoupon } from './coupons'
+import { invalidateStorefront } from './catalog'
 import {
   ADMIN_CANCELLABLE,
   BASE_VARIANT_ID,
@@ -39,11 +40,11 @@ function newOrderId(): string {
 async function takeStock(i: OrderItemDoc): Promise<boolean> {
   const res = i.variantId
     ? await ProductModel.updateOne(
-        { _id: i.productId, active: true, variants: { $elemMatch: { id: i.variantId, stock: { $gte: i.qty } } } },
+        { _id: i.productId, active: { $ne: false }, variants: { $elemMatch: { id: i.variantId, stock: { $gte: i.qty } } } },
         { $inc: { 'variants.$.stock': -i.qty, stock: -i.qty, soldCount: i.qty } }
       )
     : await ProductModel.updateOne(
-        { _id: i.productId, active: true, stock: { $gte: i.qty } },
+        { _id: i.productId, active: { $ne: false }, stock: { $gte: i.qty } },
         { $inc: { stock: -i.qty, soldCount: i.qty } }
       )
   return res.modifiedCount === 1
@@ -181,6 +182,7 @@ export async function placeOrder(user: UserDoc, input: PlaceOrderInput): Promise
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
       const created = await OrderModel.create({ _id: newOrderId(), ...base })
+      invalidateStorefront() // stock changed
       return toOrder(created.toObject() as OrderDoc)
     } catch (e: any) {
       if (e?.code === 11000 && attempt < 3) continue // order id collision → retry
@@ -246,6 +248,7 @@ async function transition(order: OrderDoc, next: OrderStatus, by: 'customer' | '
   if (next === 'CANCELLED') {
     await returnStock(order.items)
     await releaseCoupon(order.couponCode)
+    invalidateStorefront()
   }
   return toOrder(updated)
 }

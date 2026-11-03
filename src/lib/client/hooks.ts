@@ -2,9 +2,8 @@
 
 import { useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useRouter } from 'next/navigation'
 import { api } from './api'
-import type { Category, Product, StoreSettings, User } from '../types'
+import type { Banner, Category, Product, StoreSettings, Storefront, User } from '../types'
 import { useCart } from '../cart-store'
 import { linePrice, parseCartKey, type Variant } from '../types'
 
@@ -14,38 +13,60 @@ export function useMe() {
     queryFn: () => api<{ user: User | null }>('/api/auth/me'),
     staleTime: 60_000,
   })
-  return { user: q.data?.user ?? null, isLoading: q.isLoading, refetch: q.refetch }
-}
-
-export function useLogout() {
-  const qc = useQueryClient()
-  const router = useRouter()
-  return async () => {
-    await api('/api/auth/logout', { method: 'POST' }).catch(() => {})
-    qc.setQueryData(['me'], { user: null })
-    qc.removeQueries({ queryKey: ['my-orders'] })
-    router.push('/')
-    router.refresh()
+  return {
+    user: q.data?.user ?? null,
+    isLoading: q.isPending,
+    /** true only when the server answered and said "not logged in" (not on network errors) */
+    isLoggedOut: q.isSuccess && !q.data?.user,
+    refetch: q.refetch,
   }
 }
 
-export function useProducts() {
+let loggingOut = false
+/** Guards that redirect on "no session" must not fight an intentional logout. */
+export const isLoggingOut = () => loggingOut
+
+export function useLogout() {
+  const qc = useQueryClient()
+  return async () => {
+    if (loggingOut) return
+    loggingOut = true
+    await api('/api/auth/logout', { method: 'POST' }).catch(() => {})
+    qc.clear()
+    // full navigation: drops every cached page/query that belonged to the old session
+    window.location.replace('/')
+  }
+}
+
+/** Products, categories, settings and banners — one cached request, pre-filled from the server render. */
+export function useStorefront() {
   const q = useQuery({
-    queryKey: ['products'],
-    queryFn: () => api<{ products: Product[] }>('/api/products'),
+    queryKey: ['storefront'],
+    queryFn: () => api<Storefront>('/api/storefront'),
     staleTime: 60_000,
   })
-  return { products: q.data?.products ?? [], isLoading: q.isLoading, error: q.error }
+  // isPending (not isLoading) so server and browser agree when no data was preloaded
+  return { data: q.data, isLoading: q.isPending, error: q.error }
+}
+
+export function useProducts() {
+  const { data, isLoading, error } = useStorefront()
+  return { products: data?.products ?? EMPTY_PRODUCTS, isLoading, error }
 }
 
 export function useCategories() {
-  const q = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => api<{ categories: Category[] }>('/api/categories'),
-    staleTime: 5 * 60_000,
-  })
-  return { categories: q.data?.categories ?? [], isLoading: q.isLoading }
+  const { data, isLoading } = useStorefront()
+  return { categories: data?.categories ?? EMPTY_CATEGORIES, isLoading }
 }
+
+export function useBanners() {
+  const { data, isLoading } = useStorefront()
+  return { banners: data?.banners ?? EMPTY_BANNERS, isLoading }
+}
+
+const EMPTY_PRODUCTS: Product[] = []
+const EMPTY_CATEGORIES: Category[] = []
+const EMPTY_BANNERS: Banner[] = []
 
 export const DEFAULT_SETTINGS: StoreSettings = {
   deliveryFee: 30,
@@ -64,12 +85,8 @@ export const DEFAULT_SETTINGS: StoreSettings = {
 }
 
 export function useSettings() {
-  const q = useQuery({
-    queryKey: ['settings'],
-    queryFn: () => api<{ settings: StoreSettings }>('/api/settings'),
-    staleTime: 5 * 60_000,
-  })
-  return { settings: q.data?.settings ?? DEFAULT_SETTINGS, isLoading: q.isLoading }
+  const { data, isLoading } = useStorefront()
+  return { settings: data?.settings ?? DEFAULT_SETTINGS, isLoading }
 }
 
 export interface CartLine {

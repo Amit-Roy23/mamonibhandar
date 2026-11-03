@@ -2,7 +2,7 @@ import { route, body, ok, notFound } from '@/lib/server/http'
 import { requireAdmin } from '@/lib/server/auth'
 import { productPatchSchema, productSchema } from '@/lib/validation'
 import { deleteProduct, patchProduct, updateProduct } from '@/lib/server/catalog'
-import { deleteImage, sanitizeImage } from '@/lib/server/cloudinary'
+import { deleteImage, cleanImage } from '@/lib/server/cloudinary'
 
 type P = { id: string }
 
@@ -11,7 +11,7 @@ export const PUT = route<P>(async (req, { params }) => {
   await requireAdmin(req)
   const { id } = await params
   const input = await body(req, productSchema)
-  const image = sanitizeImage(input.image)
+  const image = cleanImage(input.image)
   const { product, previous } = await updateProduct(id, { ...input, image })
   if (previous.image?.publicId && previous.image.publicId !== image?.publicId) await deleteImage(previous.image.publicId)
   return ok({ product })

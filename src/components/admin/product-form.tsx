@@ -78,7 +78,7 @@ export function ProductForm({ product }: { product?: Product }) {
       if (product) await api(`/api/admin/products/${product.id}`, { method: 'PUT', body: parsed.data })
       else await api('/api/admin/products', { body: parsed.data })
       qc.invalidateQueries({ queryKey: ['admin-products'] })
-      qc.invalidateQueries({ queryKey: ['products'] })
+      qc.invalidateQueries({ queryKey: ['storefront'] })
       qc.invalidateQueries({ queryKey: ['admin-stats'] })
       toast.success(product ? 'Product updated' : 'Product added to the store 🎉')
       router.push('/admin/products')

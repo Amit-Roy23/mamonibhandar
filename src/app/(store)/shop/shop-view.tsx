@@ -7,6 +7,7 @@ import { PackageSearch, SlidersHorizontal, X } from 'lucide-react'
 import { ProductGrid } from '@/components/store/product-card'
 import { EmptyState } from '@/components/common/empty-state'
 import { searchProducts } from '@/components/store/search-box'
+import { CategoryArt } from '@/components/store/category-tile'
 import { useCategories, useProducts } from '@/lib/client/hooks'
 import { discountPct } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -87,7 +88,7 @@ export function ShopView() {
               const n = products.filter((p) => p.category === c.name).length
               return (
                 <button key={c.id} onClick={() => setParam({ category: c.name })} className={cn('flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium', category === c.name ? 'bg-brand-700 text-white' : 'hover:bg-cream')}>
-                  <span aria-hidden>{c.emoji}</span> <span className="flex-1 truncate">{c.name}</span> <span className="text-xs opacity-70">{n}</span>
+                  <CategoryArt category={c} size={24} /> <span className="flex-1 truncate">{c.name}</span> <span className="text-xs opacity-70">{n}</span>
                 </button>
               )
             })}
@@ -97,7 +98,7 @@ export function ShopView() {
         <div className="min-w-0 flex-1">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="flex items-center gap-2 text-2xl font-extrabold sm:text-3xl">{activeCat && <span aria-hidden>{activeCat.emoji}</span>}{title}</h1>
+              <h1 className="flex items-center gap-2 text-2xl font-extrabold sm:text-3xl">{activeCat && <CategoryArt category={activeCat} size={40} />}{title}</h1>
               <p className="mt-0.5 text-sm text-muted-foreground">{isLoading ? 'Loading…' : `${filtered.length} product${filtered.length === 1 ? '' : 's'}`}</p>
             </div>
             <div className="flex items-center gap-2">
@@ -113,7 +114,7 @@ export function ShopView() {
             <button onClick={() => setParam({ category: null })} className={cn('shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-semibold', !category ? 'border-brand-700 bg-brand-700 text-white' : 'border-border bg-white')}>All</button>
             {categories.map((c) => (
               <button key={c.id} onClick={() => setParam({ category: c.name })} className={cn('flex shrink-0 items-center gap-1 rounded-full border px-3.5 py-1.5 text-sm font-medium', category === c.name ? 'border-brand-700 bg-brand-700 text-white' : 'border-border bg-white')}>
-                <span aria-hidden>{c.emoji}</span>{c.name}
+                <CategoryArt category={c} size={20} />{c.name}
               </button>
             ))}
           </div>

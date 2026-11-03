@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary'
+import { ApiError } from './http'
 
 /**
  * Server-only Cloudinary helpers.
@@ -32,7 +33,7 @@ function config() {
   }
   const c = cloudinary.config()
   if (!c.cloud_name || !c.api_key || !c.api_secret) {
-    throw new Error('Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.')
+    throw new ApiError(503, 'Photo uploads are not set up yet: add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET in Vercel, then redeploy.')
   }
   return c as { cloud_name: string; api_key: string; api_secret: string }
 }
@@ -65,10 +66,18 @@ export function createUploadSignature() {
  * Validate an image reference coming from the client: it must be a Cloudinary
  * URL on our own cloud, inside our upload folder.
  */
+/** Bundled demo images shipped in /public (starter products, categories, banners). */
+export function isDemoImage(publicId: string | undefined | null): boolean {
+  return !!publicId && publicId.startsWith('demo/')
+}
+
 export function sanitizeImage(raw: unknown): { url: string; publicId: string } | null {
   if (!raw || typeof raw !== 'object') return null
   const { url, publicId } = raw as { url?: unknown; publicId?: unknown }
   if (typeof url !== 'string' || typeof publicId !== 'string') return null
+  if (isDemoImage(publicId)) {
+    return /^\/(demo|banners)\/[\w./-]+\.(webp|png|jpe?g)$/.test(url) && !url.includes('..') ? { url, publicId } : null
+  }
   const c = config()
   let parsed: URL
   try {
@@ -82,9 +91,17 @@ export function sanitizeImage(raw: unknown): { url: string; publicId: string } |
   return { url, publicId }
 }
 
+/** Like sanitizeImage, but an image that was sent and is invalid is a 400, not silently dropped. */
+export function cleanImage(raw: unknown): { url: string; publicId: string } | null {
+  if (!raw) return null
+  const v = sanitizeImage(raw)
+  if (!v) throw new ApiError(400, 'That image could not be used. Please upload it again.')
+  return v
+}
+
 /** Best-effort delete; never throws (a leftover image shouldn't break a request). */
 export async function deleteImage(publicId: string | undefined | null): Promise<void> {
-  if (!publicId) return
+  if (!publicId || isDemoImage(publicId)) return
   try {
     config()
     await cloudinary.uploader.destroy(publicId, { invalidate: true })

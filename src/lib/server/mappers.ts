@@ -1,5 +1,5 @@
-import type { CategoryDoc, CouponDoc, OrderDoc, ProductDoc, SettingsDoc, UserDoc } from './models'
-import type { Category, Coupon, Order, Product, StoreSettings, User } from '../types'
+import type { BannerDoc, CategoryDoc, CouponDoc, OrderDoc, ProductDoc, SettingsDoc, UserDoc } from './models'
+import type { Banner, Category, Coupon, Order, Product, StoreSettings, User } from '../types'
 
 const iso = (d: Date | string | undefined | null) => (d ? new Date(d).toISOString() : new Date(0).toISOString())
 
@@ -20,6 +20,22 @@ export function toProduct(d: ProductDoc): Product {
     variants: (d.variants || []).map((v) => ({ id: v.id, label: v.label, price: v.price, mrp: v.mrp, stock: v.stock })),
     soldCount: d.soldCount || 0,
     createdAt: iso(d.createdAt),
+  }
+}
+
+export function toBanner(d: BannerDoc): Banner {
+  return {
+    id: String(d._id),
+    placement: d.placement === 'promo' ? 'promo' : 'hero',
+    eyebrow: d.eyebrow || '',
+    title: d.title,
+    subtitle: d.subtitle || '',
+    ctaLabel: d.ctaLabel || 'Shop now',
+    ctaHref: d.ctaHref || '/shop',
+    image: d.image?.url ? { url: d.image.url, publicId: d.image.publicId } : null,
+    theme: d.theme || 'green',
+    sortOrder: d.sortOrder || 0,
+    active: d.active !== false,
   }
 }
 

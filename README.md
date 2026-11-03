@@ -73,7 +73,7 @@ Every page that needs fresh data talks to MongoDB, so the distance between Verce
 Check your Atlas cluster's region (Atlas → Database → your cluster, e.g. *AWS Mumbai ap-south-1*), then in
 **Vercel → Project → Settings → Functions → Function Region** choose the same area (e.g. **Mumbai, India (bom1)**) and redeploy.
 
-The storefront catalogue is cached on the server and refreshed instantly whenever an admin saves a change or an order changes stock, so most page views don't touch the database at all.
+Store pages (home, shop, product, cart, contact, login) are prerendered and served from Vercel's CDN. They are rebuilt automatically the moment an admin saves a change or an order changes stock (and every 10 minutes as a safety net), so customers almost never wait for the server or the database.
 
 ## 💻 Local development
 

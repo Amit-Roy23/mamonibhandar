@@ -1,16 +1,21 @@
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { ShopView } from './shop-view'
+import { ProductGrid } from '@/components/store/product-card'
 
-type Props = { searchParams: Promise<{ q?: string; category?: string }> }
+export const metadata: Metadata = { title: 'Shop all groceries' }
 
-export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  const { q, category } = await searchParams
-  return { title: q ? `Search: ${q}` : category || 'Shop all groceries' }
-}
-
-export default async function ShopPage({ searchParams }: Props) {
-  // Reading searchParams makes this page render per request, so <ShopView> (which uses
-  // useSearchParams) hydrates together with the rest of the page instead of streaming separately.
-  await searchParams
-  return <ShopView />
+// Static page: search/filter/sort run instantly in the browser on the cached catalogue.
+export default function ShopPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6">
+          <ProductGrid products={[]} loading />
+        </div>
+      }
+    >
+      <ShopView />
+    </Suspense>
+  )
 }

@@ -5,8 +5,9 @@ import { StorefrontSeed } from '@/components/store/storefront-seed'
 import { getStorefront } from '@/lib/server/catalog'
 import type { Storefront } from '@/lib/types'
 
-// Rendered per request, but the catalogue itself comes from the data cache (no DB hit).
-export const dynamic = 'force-dynamic'
+// Store pages are prerendered and served from the CDN. They are rebuilt on demand when
+// invalidateStorefront() runs (any admin change or order), plus every 10 minutes as a safety net.
+export const revalidate = 600
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
   let data: Storefront | null = null

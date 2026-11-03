@@ -2,12 +2,13 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { Eye, EyeOff, Loader2, Truck, Banknote, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { api, errorMessage } from '@/lib/client/api'
+import { useMe } from '@/lib/client/hooks'
 import { loginSchema, registerSchema } from '@/lib/validation'
 import { SITE } from '@/lib/site'
 import type { User } from '@/lib/types'
@@ -28,6 +29,12 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const [show, setShow] = useState(false)
   const [loading, setLoading] = useState(false)
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }))
+  const { user } = useMe()
+
+  // already signed in → go where they were heading
+  useEffect(() => {
+    if (user && !loading) router.replace(next || (user.role === 'admin' ? '/admin' : '/account'))
+  }, [user, loading, next, router])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()

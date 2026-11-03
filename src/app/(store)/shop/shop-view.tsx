@@ -79,7 +79,7 @@ export function ShopView() {
       <div className="flex flex-col gap-6 lg:flex-row">
         {/* sidebar (desktop) */}
         <aside className="hidden w-60 shrink-0 lg:block">
-          <div className="sticky top-36 space-y-1 rounded-3xl bg-white p-3 ring-1 ring-border">
+          <div className="sticky top-36 max-h-[calc(100dvh-10rem)] [scrollbar-width:thin] space-y-1 overflow-y-auto overscroll-contain rounded-3xl bg-white p-3 ring-1 ring-border">
             <p className="px-3 pb-1 pt-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">Categories</p>
             <button onClick={() => setParam({ category: null })} className={cn('flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium', !category ? 'bg-brand-700 text-white' : 'hover:bg-cream')}>
               All products <span className="text-xs opacity-70">{products.length}</span>

@@ -30,6 +30,9 @@ export async function connectDB(): Promise<typeof mongoose> {
     cache.promise = mongoose.connect(uri, {
       dbName: process.env.MONGODB_DB || undefined, // falls back to the db name in the URI
       bufferCommands: false,
+      // Index checks on every cold start add several round trips; in production the data
+      // migration creates indexes once instead (see ensureSeeded).
+      autoIndex: process.env.NODE_ENV !== 'production',
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 6_000,
     })

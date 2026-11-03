@@ -83,12 +83,12 @@ export function CheckoutView() {
         },
       })
       clear()
-      qc.invalidateQueries({ queryKey: ['products'] })
+      qc.invalidateQueries({ queryKey: ['storefront'] })
       qc.invalidateQueries({ queryKey: ['my-orders'] })
       router.replace(`/account/orders/${order.id}?placed=1`)
     } catch (e) {
       toast.error(errorMessage(e, 'Could not place your order'))
-      qc.invalidateQueries({ queryKey: ['products'] }) // refresh stock/prices
+      qc.invalidateQueries({ queryKey: ['storefront'] }) // refresh stock/prices
       setPlacing(false)
     }
   }

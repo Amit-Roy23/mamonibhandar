@@ -13,6 +13,7 @@ import { SITE } from '@/lib/site'
 import { ProductImage } from '@/components/common/product-image'
 import { Price } from '@/components/common/price'
 import { AddToCart } from '@/components/store/add-to-cart'
+import { isFullBleed } from '@/components/store/product-card'
 import { ProductRail } from '@/components/store/section'
 import { EmptyState } from '@/components/common/empty-state'
 import { cn } from '@/lib/utils'
@@ -66,8 +67,8 @@ function ProductDetail({ product, all }: { product: Product; all: Product[] }) {
 
         <div className="grid gap-6 md:grid-cols-2 md:gap-10 lg:gap-14">
           <div className="relative">
-            <div className="sticky top-36 grid aspect-square place-items-center overflow-hidden rounded-[2rem] bg-gradient-to-br from-white via-cream to-cream-200 p-8 ring-1 ring-border">
-              <ProductImage product={product} width={560} priority emojiClassName="text-[9rem] sm:text-[11rem] drop-shadow" className={cn(info.stock <= 0 && 'opacity-50 grayscale')} />
+            <div className={cn('sticky top-36 grid aspect-square place-items-center overflow-hidden rounded-[2rem] bg-gradient-to-br from-white via-cream to-cream-200 ring-1 ring-border', !isFullBleed(product) && 'p-8')}>
+              <ProductImage product={product} width={560} priority emojiClassName="text-[9rem] sm:text-[11rem] drop-shadow" className={cn(isFullBleed(product) && 'object-cover', info.stock <= 0 && 'opacity-50 grayscale')} />
               {product.featured && <span className="absolute left-4 top-4 rounded-full bg-leaf-500 px-3 py-1 text-xs font-bold text-white">Bestseller</span>}
             </div>
           </div>

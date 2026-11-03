@@ -1,4 +1,9 @@
-import type { Product, Variant } from './types'
+import type { Product, ProductImage, Variant } from './types'
+
+/** Bundled demo photo for a starter product (replace from the admin panel any time). */
+export function demoProductImage(id: string): ProductImage {
+  return { url: `/demo/products/${id}.webp`, publicId: `demo/products/${id}` }
+}
 
 interface SeedVariant {
   label: string
@@ -323,7 +328,7 @@ export function buildSeedProducts(): Product[] {
       emoji: p.emoji,
       featured: p.featured ?? false,
       active: true,
-      image: null,
+      image: demoProductImage(`seed_${String(i + 1).padStart(3, '0')}`),
       soldCount: 0,
       variants,
       createdAt: now,

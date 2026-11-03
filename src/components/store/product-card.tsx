@@ -10,6 +10,9 @@ import { useHydrated, useWishlist } from '@/lib/cart-store'
 import { defaultVariantId, hasVariants, linePrice, type Product } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
+/** Bundled demo shots already have a backdrop, so they fill the frame edge to edge. */
+export const isFullBleed = (p: Pick<Product, 'image'>) => !!p.image?.publicId?.startsWith('demo/')
+
 export function ProductCard({ product, className }: { product: Product; className?: string }) {
   const hydrated = useHydrated()
   const [vid, setVid] = useState(() => defaultVariantId(product))
@@ -19,12 +22,13 @@ export function ProductCard({ product, className }: { product: Product; classNam
   const wished = useWishlist((s) => s.ids.includes(product.id))
   const toggleWish = useWishlist((s) => s.toggle)
   const multi = hasVariants(product)
+  const filled = isFullBleed(product)
 
   return (
     <article className={cn('group relative flex flex-col rounded-3xl border border-border/80 bg-white p-2.5 transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-[0_12px_30px_-12px_rgba(28,107,52,0.25)] sm:p-3', className)}>
       <Link href={`/product/${product.id}`} className="relative block aspect-square overflow-hidden rounded-2xl bg-gradient-to-br from-cream to-cream-200" aria-label={product.name}>
-        <div className={cn('grid h-full w-full place-items-center p-3 transition duration-300 group-hover:scale-105', out && 'opacity-50 grayscale')}>
-          <ProductImage product={product} width={220} emojiClassName="text-6xl sm:text-7xl drop-shadow-sm" />
+        <div className={cn('grid h-full w-full place-items-center transition duration-500 group-hover:scale-[1.06]', !filled && 'p-3', out && 'opacity-50 grayscale')}>
+          <ProductImage product={product} width={240} className={filled ? 'object-cover' : ''} emojiClassName="text-6xl sm:text-7xl drop-shadow-sm" />
         </div>
         {off > 0 && !out && (
           <span className="absolute left-0 top-3 rounded-r-full bg-saffron-500 py-1 pl-2 pr-2.5 text-[11px] font-extrabold text-white shadow-sm">

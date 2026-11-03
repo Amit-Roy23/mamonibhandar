@@ -33,7 +33,7 @@ function SettingsForm({ initial }: { initial: StoreSettings }) {
     try {
       const r = await api<{ settings: StoreSettings }>('/api/admin/settings', { method: 'PUT', body: parsed.data })
       qc.setQueryData(['admin-settings'], r)
-      qc.setQueryData(['settings'], r)
+      qc.invalidateQueries({ queryKey: ['storefront'] })
       toast.success('Settings saved')
     } catch (e) {
       toast.error(errorMessage(e))

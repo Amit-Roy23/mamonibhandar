@@ -8,7 +8,7 @@ One Next.js project that deploys to Vercel as both the storefront (frontend) and
 ## ✨ Features
 
 ### Customer side
-- Home page with hero banners, categories, bestsellers, biggest savings, per-category rows
+- Home page with a swipeable hero carousel + offer cards (managed from the admin panel), colourful category tiles, bestsellers, biggest savings, essentials under ₹99, per-category rows
 - Shop page: search with instant suggestions, category filter, sort (popular, price, discount, newest), in-stock / on-offer filters
 - Product page with pack-size selection, stock status, related products, share previews
 - Cart with free-delivery progress, stock warnings, savings summary
@@ -22,6 +22,7 @@ One Next.js project that deploys to Vercel as both the storefront (frontend) and
 - **Dashboard**: today's sales, 14-day sales chart, orders by status, pending-order alert, low stock, top sellers
 - **Products**: full CRUD, Cloudinary photo upload (drag & drop), multiple pack sizes with their own price/MRP/stock, hide/show, bestseller badge, inline stock editing
 - **Categories**: add / rename / reorder / hide, optional image
+- **Home banners**: hero slides and offer cards — image upload, headline, button text & link, colour theme, order, show/hide, live preview
 - **Orders**: filter by status, search, one-click status updates (Placed → Confirmed → Packed → Out for delivery → Delivered), cancel with reason (stock returned automatically), payment status, call/WhatsApp customer, print invoice
 - **Customers**: order count & total spent, block/unblock, grant admin access
 - **Coupons**: % or flat, minimum order, max discount, expiry, total & per-customer limits
@@ -64,8 +65,15 @@ One Next.js project that deploys to Vercel as both the storefront (frontend) and
 | `SMTP_USER`, `SMTP_PASS` | optional | enables order emails (Gmail app password) |
 | `MONGODB_DB`, `CLOUDINARY_FOLDER`, `ORDER_NOTIFY_EMAIL` | optional | |
 
-5. **Deploy.** The first visit seeds the starter categories and ~100 products.
+5. **Deploy.** The first visit seeds the starter categories, ~100 demo products with demo photos, and the home banners. Data saved by older versions of the app is upgraded automatically.
 6. Open `/login`, sign in with `ADMIN_EMAIL` + `ADMIN_PASSWORD` → you land in the admin panel. Go to **Store settings** to set your phone, hours, delivery fee and pincodes.
+
+### ⚡ Speed tip — put the server next to the database
+Every page that needs fresh data talks to MongoDB, so the distance between Vercel and Atlas matters.
+Check your Atlas cluster's region (Atlas → Database → your cluster, e.g. *AWS Mumbai ap-south-1*), then in
+**Vercel → Project → Settings → Functions → Function Region** choose the same area (e.g. **Mumbai, India (bom1)**) and redeploy.
+
+The storefront catalogue is cached on the server and refreshed instantly whenever an admin saves a change or an order changes stock, so most page views don't touch the database at all.
 
 ## 💻 Local development
 
@@ -76,6 +84,12 @@ npm run dev             # http://localhost:3000
 ```
 
 `npm run seed` resets the starter products (keeps your own products and all orders).
+
+## 🖼️ Demo images
+
+The starter products, categories and two offer cards use generated illustrations in `public/demo/`, built from
+[Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji) (MIT licence). Replace any of them by uploading a real
+photo in the admin panel; uploads go to Cloudinary. The hero photos live in `public/banners/`.
 
 ## 🗂️ Structure
 

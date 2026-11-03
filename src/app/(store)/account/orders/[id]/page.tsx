@@ -39,7 +39,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       const r = await api<{ order: Order }>(`/api/orders/${encodeURIComponent(id)}/cancel`, { body: { reason } })
       qc.setQueryData(['order', id], r)
       qc.invalidateQueries({ queryKey: ['my-orders'] })
-      qc.invalidateQueries({ queryKey: ['products'] })
+      qc.invalidateQueries({ queryKey: ['storefront'] })
       toast.success('Your order has been cancelled')
       setCancelOpen(false)
     } catch (e) {

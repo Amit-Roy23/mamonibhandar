@@ -5,9 +5,9 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { BadgePercent, LayoutDashboard, LogOut, Menu, Package, Settings, ShoppingCart, Store, Tags, Users } from 'lucide-react'
+import { BadgePercent, GalleryHorizontalEnd, LayoutDashboard, LogOut, Menu, Package, Settings, ShoppingCart, Store, Tags, Users } from 'lucide-react'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
-import { useLogout, useMe } from '@/lib/client/hooks'
+import { isLoggingOut, useLogout, useMe } from '@/lib/client/hooks'
 import { api } from '@/lib/client/api'
 import type { DashboardStats } from '@/lib/server/stats'
 import { SITE } from '@/lib/site'
@@ -18,6 +18,7 @@ const NAV = [
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/admin/products', label: 'Products', icon: Package },
   { href: '/admin/categories', label: 'Categories', icon: Tags },
+  { href: '/admin/banners', label: 'Home banners', icon: GalleryHorizontalEnd },
   { href: '/admin/customers', label: 'Customers', icon: Users },
   { href: '/admin/coupons', label: 'Coupons', icon: BadgePercent },
   { href: '/admin/settings', label: 'Store settings', icon: Settings },
@@ -82,16 +83,19 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
-  const { user, isLoading } = useMe()
+  const { user, isLoggedOut } = useMe()
   const router = useRouter()
   const pathname = usePathname()
 
   // stale/revoked session → back to login
   useEffect(() => {
-    if (!isLoading && (!user || user.role !== 'admin')) {
+    if (isLoggingOut()) return
+    if (isLoggedOut) {
       api('/api/auth/logout', { method: 'POST' }).finally(() => router.replace(`/login?next=${encodeURIComponent(pathname)}`))
+    } else if (user && user.role !== 'admin') {
+      router.replace('/') // a customer account can't use the admin panel
     }
-  }, [isLoading, user, router, pathname])
+  }, [isLoggedOut, user, router, pathname])
 
   return (
     <div className="min-h-screen bg-[#f5f3ee] lg:pl-64">

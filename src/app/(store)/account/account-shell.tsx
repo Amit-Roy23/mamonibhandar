@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, LogOut, MapPin, Package, UserRound } from 'lucide-react'
-import { useLogout, useMe } from '@/lib/client/hooks'
+import { isLoggingOut, useLogout, useMe } from '@/lib/client/hooks'
 import { api } from '@/lib/client/api'
 import { cn } from '@/lib/utils'
 
@@ -17,15 +17,15 @@ const NAV = [
 export function AccountShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const { user, isLoading } = useMe()
+  const { user, isLoggedOut } = useMe()
   const logout = useLogout()
 
   // cookie exists but the session is no longer valid (password changed, blocked…)
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (isLoggedOut && !isLoggingOut()) {
       api('/api/auth/logout', { method: 'POST' }).finally(() => router.replace(`/login?next=${encodeURIComponent(pathname)}`))
     }
-  }, [isLoading, user, pathname, router])
+  }, [isLoggedOut, pathname, router])
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 sm:pt-8">

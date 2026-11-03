@@ -344,6 +344,7 @@ export interface SettingsDoc {
   whatsapp: string
   email: string
   openingHours: string
+  dataVersion: number
 }
 
 const SettingsSchema = new Schema<SettingsDoc>(
@@ -362,8 +363,46 @@ const SettingsSchema = new Schema<SettingsDoc>(
     whatsapp: { type: String, default: '' },
     email: { type: String, default: '' },
     openingHours: { type: String, default: '' },
+    dataVersion: { type: Number, default: 0 },
   },
   { versionKey: false, timestamps: true }
+)
+
+/* ================================================================== */
+/* Banner (home page hero slides + promo cards)                       */
+/* ================================================================== */
+
+export interface BannerDoc {
+  _id: string
+  placement: 'hero' | 'promo'
+  eyebrow: string
+  title: string
+  subtitle: string
+  ctaLabel: string
+  ctaHref: string
+  image?: ImageDoc | null
+  theme: 'green' | 'saffron' | 'leaf' | 'berry' | 'dark'
+  sortOrder: number
+  active: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+const BannerSchema = new Schema<BannerDoc>(
+  {
+    _id: { type: String, required: true },
+    placement: { type: String, enum: ['hero', 'promo'], default: 'hero', index: true },
+    eyebrow: { type: String, default: '', maxlength: 60 },
+    title: { type: String, required: true, maxlength: 90 },
+    subtitle: { type: String, default: '', maxlength: 200 },
+    ctaLabel: { type: String, default: 'Shop now', maxlength: 30 },
+    ctaHref: { type: String, default: '/shop', maxlength: 200 },
+    image: { type: ImageSchema, default: null },
+    theme: { type: String, enum: ['green', 'saffron', 'leaf', 'berry', 'dark'], default: 'green' },
+    sortOrder: { type: Number, default: 0 },
+    active: { type: Boolean, default: true },
+  },
+  { timestamps: true, versionKey: false }
 )
 
 /* ================================================================== */
@@ -380,3 +419,4 @@ export const ProductModel = model<ProductDoc>('Product', ProductSchema)
 export const OrderModel = model<OrderDoc>('Order', OrderSchema)
 export const CouponModel = model<CouponDoc>('Coupon', CouponSchema)
 export const SettingsModel = model<SettingsDoc>('Settings', SettingsSchema)
+export const BannerModel = model<BannerDoc>('Banner', BannerSchema)

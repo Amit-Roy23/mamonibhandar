@@ -31,7 +31,7 @@ export async function connectDB(): Promise<typeof mongoose> {
       dbName: process.env.MONGODB_DB || undefined, // falls back to the db name in the URI
       bufferCommands: false,
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 10_000,
+      serverSelectionTimeoutMS: 6_000,
     })
   }
 

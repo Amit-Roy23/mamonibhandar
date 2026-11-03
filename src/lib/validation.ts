@@ -117,6 +117,24 @@ export const categorySchema = z.object({
   active: z.boolean().default(true),
 })
 
+export const bannerSchema = z.object({
+  placement: z.enum(['hero', 'promo']),
+  eyebrow: z.string().trim().max(60).default(''),
+  title: trimmed(3, 90, 'Banner title'),
+  subtitle: z.string().trim().max(200).default(''),
+  ctaLabel: z.string().trim().max(30).default('Shop now'),
+  ctaHref: z
+    .string()
+    .trim()
+    .max(200)
+    .default('/shop')
+    .refine((v) => v.startsWith('/') || /^https?:\/\//.test(v), 'Link must start with / (a page on this site) or https://'),
+  image,
+  theme: z.enum(['green', 'saffron', 'leaf', 'berry', 'dark']).default('green'),
+  sortOrder: z.number().int().min(0).max(999).default(0),
+  active: z.boolean().default(true),
+})
+
 export const couponSchema = z.object({
   code: z.string().trim().min(3, 'Code must be at least 3 characters').max(20),
   description: z.string().trim().max(160).default(''),

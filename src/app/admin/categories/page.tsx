@@ -6,7 +6,8 @@ import { toast } from 'sonner'
 import { EyeOff, Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/admin/admin-shell'
 import { ImageUploader } from '@/components/admin/image-uploader'
-import { ProductImage } from '@/components/common/product-image'
+import { CategoryArt } from '@/components/store/category-tile'
+import { categoryTheme } from '@/lib/site'
 import { Switch } from '@/components/ui/switch'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { api, errorMessage } from '@/lib/client/api'
@@ -33,8 +34,7 @@ export default function CategoriesPage() {
 
   function refresh() {
     qc.invalidateQueries({ queryKey: ['admin-categories'] })
-    qc.invalidateQueries({ queryKey: ['categories'] })
-    qc.invalidateQueries({ queryKey: ['products'] })
+    qc.invalidateQueries({ queryKey: ['storefront'] })
     qc.invalidateQueries({ queryKey: ['admin-products'] })
   }
 
@@ -75,7 +75,7 @@ export default function CategoriesPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {categories.map((c) => (
             <div key={c.id} className="flex items-center gap-3 rounded-3xl bg-white p-3 ring-1 ring-border">
-              <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-brand-50 to-leaf-50 text-3xl"><ProductImage product={c} width={64} className="p-1.5" /></span>
+              <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl" style={{ background: `linear-gradient(160deg, ${categoryTheme(c.id).from}, ${categoryTheme(c.id).to})` }}><CategoryArt category={c} size={56} /></span>
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-1.5 truncate font-bold">{c.name} {!c.active && <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}</p>
                 <p className="text-xs text-muted-foreground">{c.productCount ?? 0} products · order {c.sortOrder}</p>

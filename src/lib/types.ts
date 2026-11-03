@@ -170,6 +170,30 @@ export interface Coupon {
   createdAt: string
 }
 
+export type BannerTheme = 'green' | 'saffron' | 'leaf' | 'berry' | 'dark'
+
+export interface Banner {
+  id: string
+  placement: 'hero' | 'promo'
+  eyebrow: string
+  title: string
+  subtitle: string
+  ctaLabel: string
+  ctaHref: string
+  image?: ProductImage | null
+  theme: BannerTheme
+  sortOrder: number
+  active: boolean
+}
+
+/** Everything the storefront needs, served from one cached request. */
+export interface Storefront {
+  products: Product[]
+  categories: Category[]
+  settings: StoreSettings
+  banners: Banner[]
+}
+
 export interface StoreSettings {
   deliveryFee: number
   freeDeliveryAbove: number // 0 = never free

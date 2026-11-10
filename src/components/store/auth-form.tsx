@@ -85,7 +85,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         <h2 className="mt-8 text-3xl font-extrabold leading-tight">{mode === 'login' ? 'Welcome back to your neighbourhood store.' : `Join ${SITE.name} — groceries made easy.`}</h2>
         <ul className="mt-8 space-y-4 text-sm text-white/85">
           <li className="flex items-center gap-3"><Truck className="h-5 w-5 text-leaf-300" /> Doorstep delivery around {SITE.address.city}</li>
-          <li className="flex items-center gap-3"><Banknote className="h-5 w-5 text-leaf-300" /> Pay by cash or UPI on delivery</li>
+          <li className="flex items-center gap-3"><Banknote className="h-5 w-5 text-leaf-300" /> Cash on Delivery — pay when it arrives</li>
           <li className="flex items-center gap-3"><ShieldCheck className="h-5 w-5 text-leaf-300" /> Track orders & save addresses</li>
         </ul>
         <div className="absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-saffron-500/30 blur-3xl" />

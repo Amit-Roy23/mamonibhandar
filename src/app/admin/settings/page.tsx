@@ -30,7 +30,6 @@ function SettingsForm({ initial }: { initial: StoreSettings }) {
   async function save() {
     const parsed = settingsSchema.safeParse({ ...s, serviceablePincodes: pins.split(/[\s,]+/).filter(Boolean) })
     if (!parsed.success) return toast.error(parsed.error.issues[0].message)
-    if (!parsed.data.codEnabled && !parsed.data.upiEnabled) return toast.error('Keep at least one payment method enabled')
     setSaving(true)
     try {
       const r = await api<{ settings: StoreSettings }>('/api/admin/settings', { method: 'PUT', body: parsed.data })
@@ -76,11 +75,10 @@ function SettingsForm({ initial }: { initial: StoreSettings }) {
 
         <DeliveryAreaSection s={s} set={set} />
 
-        <section className="space-y-4 rounded-3xl bg-white p-5 ring-1 ring-border">
+        <section className="space-y-2 rounded-3xl bg-white p-5 ring-1 ring-border">
           <h2 className="font-bold">Payments</h2>
-          <label className="flex items-center justify-between gap-4"><span className="text-sm font-semibold">Cash on Delivery</span><Switch checked={s.codEnabled} onCheckedChange={(v) => set('codEnabled', v)} /></label>
-          <label className="flex items-center justify-between gap-4"><span className="text-sm font-semibold">UPI on Delivery</span><Switch checked={s.upiEnabled} onCheckedChange={(v) => set('upiEnabled', v)} /></label>
-          <label className="block space-y-1.5"><span className="text-sm font-semibold">Store UPI ID (shown at checkout)</span><input className={inputCls} value={s.upiId} onChange={(e) => set('upiId', e.target.value)} placeholder="maamonibhandar@upi" /></label>
+          <p className="text-sm">Customers pay <b>Cash on Delivery</b> — the only payment method on this store.</p>
+          <p className="text-xs text-muted-foreground">Orders are marked paid automatically when you set them to Delivered.</p>
         </section>
 
         <section className="space-y-4 rounded-3xl bg-white p-5 ring-1 ring-border lg:col-span-2">

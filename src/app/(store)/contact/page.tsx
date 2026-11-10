@@ -63,7 +63,7 @@ export default function ContactPage() {
         <h2 className="text-xl font-bold">Delivery, payment & returns</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
           <div><Truck className="h-5 w-5 text-brand-700" /><p className="mt-2 font-semibold">Delivery</p><p className="text-sm text-muted-foreground">{zone.limited ? `Within ${formatKm(zone.radiusKm)} of our shop. ` : ''}{settings.freeDeliveryAbove > 0 ? `Free above ${formatINR(settings.freeDeliveryAbove)}, otherwise ${formatINR(settings.deliveryFee)}.` : `${formatINR(settings.deliveryFee)} per order.`} Minimum order {formatINR(settings.minOrderValue)}.{settings.serviceablePincodes.length > 0 && ` We deliver to: ${settings.serviceablePincodes.join(', ')}.`}</p></div>
-          <div><Banknote className="h-5 w-5 text-brand-700" /><p className="mt-2 font-semibold">Payment</p><p className="text-sm text-muted-foreground">Pay by cash or UPI when your order is delivered. No advance payment needed.</p></div>
+          <div><Banknote className="h-5 w-5 text-brand-700" /><p className="mt-2 font-semibold">Payment</p><p className="text-sm text-muted-foreground">Cash on Delivery only — pay in cash when your order arrives. No advance payment needed.</p></div>
           <div><RotateCcw className="h-5 w-5 text-brand-700" /><p className="mt-2 font-semibold">Cancellations & returns</p><p className="text-sm text-muted-foreground">Cancel any time before your order is packed from <i>My orders</i>. Damaged or wrong item? Tell the delivery person or email us the same day.</p></div>
         </div>
       </section>

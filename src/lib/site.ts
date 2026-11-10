@@ -106,8 +106,8 @@ export const DEFAULT_BANNERS = [
   },
   {
     placement: 'promo' as const,
-    eyebrow: 'Pay on delivery',
-    title: 'Cash or UPI when your order arrives',
+    eyebrow: 'Cash on Delivery',
+    title: 'Pay in cash when your order arrives',
     subtitle: '',
     ctaLabel: 'How delivery works',
     ctaHref: '/contact#delivery',

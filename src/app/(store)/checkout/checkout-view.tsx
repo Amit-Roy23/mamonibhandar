@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Banknote, Check, ChevronLeft, MapPin, Plus, Smartphone, Tag, X, Loader2, ShieldCheck } from 'lucide-react'
+import { Banknote, Check, ChevronLeft, MapPin, Plus, Tag, X, Loader2, ShieldCheck } from 'lucide-react'
 import { useCartLines, useMe, useSettings } from '@/lib/client/hooks'
 import { useCart, useHydrated } from '@/lib/cart-store'
 import { api, errorMessage } from '@/lib/client/api'
@@ -39,8 +39,7 @@ export function CheckoutView() {
   const selected = addresses.find((a) => a.id === selectedId)
   const [addrOpen, setAddrOpen] = useState(false)
 
-  const [payment, setPayment] = useState<PaymentMethod | null>(null)
-  const pay: PaymentMethod | null = payment ?? (settings.codEnabled ? 'COD' : settings.upiEnabled ? 'UPI' : null)
+  const pay: PaymentMethod = 'COD' // Cash on Delivery only
 
   const [couponInput, setCouponInput] = useState('')
   const [coupon, setCoupon] = useState<{ code: string; discount: number; description: string } | null>(null)
@@ -75,7 +74,6 @@ export function CheckoutView() {
 
   async function placeOrder() {
     if (!selected) return toast.error('Please add a delivery address')
-    if (!pay) return toast.error('Please choose a payment method')
     setPlacing(true)
     try {
       const { order } = await api<{ order: Order }>('/api/orders', {
@@ -159,10 +157,7 @@ export function CheckoutView() {
 
           {/* 2. payment */}
           <Step n={2} title="Payment" done={!!pay}>
-            <div className="grid gap-2.5 sm:grid-cols-2">
-              <PayOption icon={Banknote} title="Cash on Delivery" text="Pay in cash when your order arrives" active={pay === 'COD'} disabled={!settings.codEnabled} onClick={() => setPayment('COD')} />
-              <PayOption icon={Smartphone} title="UPI on Delivery" text={settings.upiId ? `Scan & pay to ${settings.upiId}` : 'GPay, PhonePe, Paytm at your door'} active={pay === 'UPI'} disabled={!settings.upiEnabled} onClick={() => setPayment('UPI')} />
-            </div>
+            <PayOption icon={Banknote} title="Cash on Delivery" text="Pay in cash to our delivery person when your order arrives. No advance payment." active onClick={() => {}} />
           </Step>
 
           {/* 3. extras */}

@@ -58,7 +58,7 @@ export default function HomePage() {
         <div className="no-scrollbar flex gap-2 overflow-x-auto sm:grid sm:grid-cols-4 sm:gap-3">
           {[
             { icon: Truck, title: settings.freeDeliveryAbove > 0 ? `Free delivery over ${formatINR(settings.freeDeliveryAbove)}` : 'Doorstep delivery', text: `Around ${SITE.address.city}` },
-            { icon: ShieldCheck, title: 'Pay on delivery', text: 'Cash or UPI' },
+            { icon: ShieldCheck, title: 'Cash on Delivery', text: 'Pay when it arrives' },
             { icon: Leaf, title: 'Fresh every day', text: 'Restocked daily' },
             { icon: BadgeIndianRupee, title: 'Bazaar prices', text: 'Honest MRP, real savings' },
           ].map(({ icon: Icon, title, text }) => (

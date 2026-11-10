@@ -30,6 +30,8 @@ export interface AddressDoc {
   district: string
   state: string
   pincode: string
+  lat?: number
+  lng?: number
   isDefault: boolean
 }
 
@@ -60,6 +62,8 @@ const AddressSchema = new Schema<AddressDoc>({
   district: { type: String, required: true, maxlength: 60 },
   state: { type: String, required: true, maxlength: 60 },
   pincode: { type: String, required: true, match: /^\d{6}$/ },
+  lat: { type: Number, min: -90, max: 90 },
+  lng: { type: Number, min: -180, max: 180 },
   isDefault: { type: Boolean, default: false },
 })
 
@@ -210,7 +214,10 @@ export interface OrderDoc {
     district: string
     state: string
     pincode: string
+    lat?: number
+    lng?: number
   }
+  distanceKm?: number
   items: OrderItemDoc[]
   subtotal: number
   discount: number
@@ -269,7 +276,10 @@ const OrderSchema = new Schema<OrderDoc>(
       district: { type: String, required: true },
       state: { type: String, required: true },
       pincode: { type: String, required: true },
+      lat: { type: Number },
+      lng: { type: Number },
     },
+    distanceKm: { type: Number },
     items: { type: [OrderItemSchema], required: true },
     subtotal: { type: Number, required: true },
     discount: { type: Number, default: 0 },
@@ -344,6 +354,10 @@ export interface SettingsDoc {
   whatsapp: string
   email: string
   openingHours: string
+  storeLat: number | null
+  storeLng: number | null
+  deliveryRadiusKm: number
+  storeMapUrl: string
   dataVersion: number
 }
 
@@ -363,6 +377,10 @@ const SettingsSchema = new Schema<SettingsDoc>(
     whatsapp: { type: String, default: '' },
     email: { type: String, default: '' },
     openingHours: { type: String, default: '' },
+    storeLat: { type: Number, default: null },
+    storeLng: { type: Number, default: null },
+    deliveryRadiusKm: { type: Number, default: 4, min: 0, max: 100 },
+    storeMapUrl: { type: String, default: '' },
     dataVersion: { type: Number, default: 0 },
   },
   { versionKey: false, timestamps: true }

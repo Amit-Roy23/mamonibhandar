@@ -13,6 +13,7 @@ import { api, errorMessage } from '@/lib/client/api'
 import { formatINR } from '@/lib/format'
 import { ORDER_STATUSES, PAYMENT_LABEL, STATUS_LABEL, STATUS_FLOW, type Order, type OrderStatus } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { formatKm } from '@/lib/geo'
 
 export default function AdminOrdersPage() {
   return <Suspense><OrdersView /></Suspense>
@@ -89,7 +90,7 @@ function OrdersView() {
                 return (
                   <tr key={o.id} className="hover:bg-cream/40">
                     <td className="px-4 py-3"><Link href={`/admin/orders/${o.id}`} className="font-mono font-bold hover:text-brand-700">#{o.id}</Link><p className="text-xs text-muted-foreground">{ago(o.createdAt)}</p></td>
-                    <td className="px-3 py-3"><p className="font-semibold">{o.customerName}</p><p className="text-xs text-muted-foreground">{o.phone} · {o.address.pincode}</p></td>
+                    <td className="px-3 py-3"><p className="font-semibold">{o.customerName}</p><p className="text-xs text-muted-foreground">{o.phone} · {o.address.pincode}{o.distanceKm != null ? ` · ${formatKm(o.distanceKm)}` : ''}</p></td>
                     <td className="max-w-56 px-3 py-3"><p className="truncate text-xs text-muted-foreground" title={o.items.map((i) => `${i.name} (${i.unit}) ×${i.qty}`).join(', ')}>{o.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</p></td>
                     <td className="px-3 py-3"><p className="font-bold">{formatINR(o.total)}</p><p className="text-xs text-muted-foreground">{o.paymentMethod === 'COD' ? 'Cash' : 'UPI'} · {o.paymentStatus === 'PAID' ? 'paid' : 'unpaid'}</p></td>
                     <td className="px-3 py-3"><StatusBadge status={o.status} /></td>

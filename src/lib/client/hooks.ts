@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './api'
+import { DEFAULT_DELIVERY_RADIUS_KM, DEFAULT_STORE_LOCATION } from '../geo'
 import type { Banner, Category, Product, StoreSettings, Storefront, User } from '../types'
 import { useCart } from '../cart-store'
 import { linePrice, parseCartKey, type Variant } from '../types'
@@ -82,6 +83,10 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   whatsapp: '',
   email: 'maamonibhandar@gmail.com',
   openingHours: '',
+  storeLat: DEFAULT_STORE_LOCATION.lat,
+  storeLng: DEFAULT_STORE_LOCATION.lng,
+  deliveryRadiusKm: DEFAULT_DELIVERY_RADIUS_KM,
+  storeMapUrl: '',
 }
 
 export function useSettings() {

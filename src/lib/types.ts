@@ -53,6 +53,9 @@ export interface Address {
   district: string
   state: string
   pincode: string
+  /** delivery pin, required for new addresses (used for the delivery-radius check) */
+  lat?: number
+  lng?: number
   isDefault: boolean
 }
 
@@ -122,6 +125,8 @@ export interface OrderAddress {
   district: string
   state: string
   pincode: string
+  lat?: number
+  lng?: number
 }
 
 export interface StatusEvent {
@@ -150,6 +155,8 @@ export interface Order {
   statusHistory: StatusEvent[]
   note?: string
   cancelReason?: string
+  /** straight-line distance from the shop to the delivery pin */
+  distanceKm?: number
   createdAt: string
 }
 
@@ -208,6 +215,11 @@ export interface StoreSettings {
   whatsapp: string
   email: string
   openingHours: string
+  /** shop pin + delivery radius (0 = no distance limit) */
+  storeLat: number | null
+  storeLng: number | null
+  deliveryRadiusKm: number
+  storeMapUrl: string
 }
 
 /* ---------------- variant / cart helpers ---------------- */

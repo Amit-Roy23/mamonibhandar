@@ -19,6 +19,7 @@ import {
   type PaymentStatus,
 } from '../types'
 import { formatINR } from '../format'
+import { checkZone, formatKm, formatKmAway } from '../geo'
 
 export interface PlaceOrderInput {
   items: { productId: string; variantId?: string; qty: number }[]
@@ -83,6 +84,16 @@ export async function placeOrder(user: UserDoc, input: PlaceOrderInput): Promise
   if (!address) throw new ApiError(400, 'Please choose a delivery address')
   if (settings.serviceablePincodes.length > 0 && !settings.serviceablePincodes.includes(address.pincode)) {
     throw new ApiError(400, `Sorry, we don't deliver to pincode ${address.pincode} yet.`)
+  }
+  // delivery radius around the shop (checked again here: the radius may have changed since the address was saved)
+  const zone = checkZone(address, settings)
+  if (!zone.ok) {
+    throw new ApiError(
+      400,
+      zone.reason === 'no-location'
+        ? 'Please edit this address and pin its location on the map so we can confirm it is within our delivery area.'
+        : `Sorry, this address is ${formatKmAway(zone.km!, zone.limitKm)} from our shop. We deliver within ${formatKm(zone.limitKm)}.`
+    )
   }
 
   // merge duplicate lines (same product + size)
@@ -165,7 +176,10 @@ export async function placeOrder(user: UserDoc, input: PlaceOrderInput): Promise
       district: address.district,
       state: address.state,
       pincode: address.pincode,
+      lat: address.lat,
+      lng: address.lng,
     },
+    distanceKm: zone.km ? Math.round(zone.km * 100) / 100 : undefined,
     items,
     subtotal,
     discount,

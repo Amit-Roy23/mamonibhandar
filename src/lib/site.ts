@@ -12,7 +12,8 @@ export const SITE = {
     state: 'Tripura',
     pincode: '799105',
   },
-  mapUrl: 'https://www.google.com/maps/search/?api=1&query=Mirza+Bazaar+Udaipur+Gomati+Tripura+799105',
+  // the shop's exact pin (shared by the client)
+  mapUrl: 'https://maps.app.goo.gl/6Ysb24Ry3uBhUGuU9',
   url: process.env.NEXT_PUBLIC_SITE_URL || 'https://mamonibhandar.vercel.app',
 } as const
 

@@ -58,6 +58,8 @@ export const addressSchema = z.object({
   district: trimmed(2, 60, 'District'),
   state: trimmed(2, 60, 'State'),
   pincode: z.string().trim().regex(/^\d{6}$/, 'Enter a valid 6-digit pincode'),
+  lat: z.number({ error: 'Please pin your delivery location on the map' }).min(-90).max(90),
+  lng: z.number({ error: 'Please pin your delivery location on the map' }).min(-180).max(180),
   isDefault: z.boolean().default(false),
 })
 
@@ -162,6 +164,10 @@ export const settingsSchema = z.object({
   whatsapp: z.string().trim().max(20),
   email: z.string().trim().max(120),
   openingHours: z.string().trim().max(80),
+  storeLat: z.number().min(-90).max(90).nullable(),
+  storeLng: z.number().min(-180).max(180).nullable(),
+  deliveryRadiusKm: z.number().min(0, 'Radius cannot be negative').max(100, 'Radius must be 100 km or less'),
+  storeMapUrl: z.string().trim().max(2000),
 })
 
 export const orderStatusSchema = z.object({

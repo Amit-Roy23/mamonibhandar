@@ -1,5 +1,6 @@
 import type { BannerDoc, CategoryDoc, CouponDoc, OrderDoc, ProductDoc, SettingsDoc, UserDoc } from './models'
 import type { Banner, Category, Coupon, Order, Product, StoreSettings, User } from '../types'
+import { DEFAULT_DELIVERY_RADIUS_KM, DEFAULT_STORE_LOCATION } from '../geo'
 
 const iso = (d: Date | string | undefined | null) => (d ? new Date(d).toISOString() : new Date(0).toISOString())
 
@@ -71,6 +72,8 @@ export function toUser(d: UserDoc): User {
       district: a.district,
       state: a.state,
       pincode: a.pincode,
+      lat: typeof a.lat === 'number' ? a.lat : undefined,
+      lng: typeof a.lng === 'number' ? a.lng : undefined,
       isDefault: Boolean(a.isDefault),
     })),
     createdAt: iso(d.createdAt),
@@ -98,7 +101,10 @@ export function toOrder(d: OrderDoc): Order {
       district: a.district || '',
       state: a.state || '',
       pincode: a.pincode || '',
+      lat: typeof a.lat === 'number' ? a.lat : undefined,
+      lng: typeof a.lng === 'number' ? a.lng : undefined,
     },
+    distanceKm: typeof d.distanceKm === 'number' ? d.distanceKm : undefined,
     items: (d.items || []).map((i) => ({
       productId: i.productId,
       name: i.name,
@@ -161,5 +167,10 @@ export function toSettings(d: Partial<SettingsDoc> | null): StoreSettings {
     whatsapp: d?.whatsapp ?? '',
     email: d?.email ?? '',
     openingHours: d?.openingHours ?? '',
+    // a settings doc saved before this feature has no pin → use the shop's pin
+    storeLat: typeof d?.storeLat === 'number' ? d.storeLat : DEFAULT_STORE_LOCATION.lat,
+    storeLng: typeof d?.storeLng === 'number' ? d.storeLng : DEFAULT_STORE_LOCATION.lng,
+    deliveryRadiusKm: typeof d?.deliveryRadiusKm === 'number' ? d.deliveryRadiusKm : DEFAULT_DELIVERY_RADIUS_KM,
+    storeMapUrl: d?.storeMapUrl ?? '',
   }
 }

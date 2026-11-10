@@ -5,9 +5,12 @@ import { Clock, Mail, MapPin, Phone, MessageCircle, Truck, RotateCcw, Banknote }
 import { useSettings } from '@/lib/client/hooks'
 import { SITE } from '@/lib/site'
 import { formatINR } from '@/lib/format'
+import { DeliveryCheck, DeliveryMap, useDeliveryZone } from '@/components/common/delivery-zone'
+import { formatKm } from '@/lib/geo'
 
 export default function ContactPage() {
   const { settings } = useSettings()
+  const zone = useDeliveryZone()
   const email = settings.email || SITE.email
   const wa = settings.whatsapp.replace(/\D/g, '')
   return (
@@ -41,10 +44,25 @@ export default function ContactPage() {
         </div>
       </div>
 
+      {zone.store && zone.limited && (
+        <section className="overflow-hidden rounded-3xl bg-white ring-1 ring-border">
+          <div className="flex flex-wrap items-end justify-between gap-3 p-6 pb-4">
+            <div>
+              <h2 className="text-xl font-bold">Our delivery area</h2>
+              <p className="text-sm text-muted-foreground">We deliver within {formatKm(zone.radiusKm)} of the shop — the green circle below.</p>
+            </div>
+            <DeliveryCheck className="bg-brand-700 py-2 text-sm hover:bg-brand-800" />
+          </div>
+          <div className="h-72 sm:h-96">
+            <DeliveryMap store={zone.store} radiusKm={zone.radiusKm} />
+          </div>
+        </section>
+      )}
+
       <section id="delivery" className="scroll-mt-32 rounded-3xl bg-white p-6 ring-1 ring-border">
         <h2 className="text-xl font-bold">Delivery, payment & returns</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          <div><Truck className="h-5 w-5 text-brand-700" /><p className="mt-2 font-semibold">Delivery</p><p className="text-sm text-muted-foreground">{settings.freeDeliveryAbove > 0 ? `Free above ${formatINR(settings.freeDeliveryAbove)}, otherwise ${formatINR(settings.deliveryFee)}.` : `${formatINR(settings.deliveryFee)} per order.`} Minimum order {formatINR(settings.minOrderValue)}.{settings.serviceablePincodes.length > 0 && ` We deliver to: ${settings.serviceablePincodes.join(', ')}.`}</p></div>
+          <div><Truck className="h-5 w-5 text-brand-700" /><p className="mt-2 font-semibold">Delivery</p><p className="text-sm text-muted-foreground">{zone.limited ? `Within ${formatKm(zone.radiusKm)} of our shop. ` : ''}{settings.freeDeliveryAbove > 0 ? `Free above ${formatINR(settings.freeDeliveryAbove)}, otherwise ${formatINR(settings.deliveryFee)}.` : `${formatINR(settings.deliveryFee)} per order.`} Minimum order {formatINR(settings.minOrderValue)}.{settings.serviceablePincodes.length > 0 && ` We deliver to: ${settings.serviceablePincodes.join(', ')}.`}</p></div>
           <div><Banknote className="h-5 w-5 text-brand-700" /><p className="mt-2 font-semibold">Payment</p><p className="text-sm text-muted-foreground">Pay by cash or UPI when your order is delivered. No advance payment needed.</p></div>
           <div><RotateCcw className="h-5 w-5 text-brand-700" /><p className="mt-2 font-semibold">Cancellations & returns</p><p className="text-sm text-muted-foreground">Cancel any time before your order is packed from <i>My orders</i>. Damaged or wrong item? Tell the delivery person or email us the same day.</p></div>
         </div>

@@ -5,6 +5,20 @@ import { toUser } from './mappers'
 import { ApiError } from './http'
 import { ADMIN_EMAIL, hashPassword, isEnvAdminLogin, verifyPassword } from './auth'
 import type { Address, User } from '../types'
+import { getSettings } from './settings'
+import { checkZone, formatKm, formatKmAway } from '../geo'
+
+/** Addresses must be pinned and inside the delivery radius. */
+async function assertDeliverable(a: { lat?: number; lng?: number }) {
+  const s = await getSettings()
+  const z = checkZone(a, s)
+  if (z.ok) return
+  if (z.reason === 'no-location') throw new ApiError(400, 'Please pin your delivery location on the map')
+  throw new ApiError(
+    400,
+    `Sorry, this location is ${formatKmAway(z.km!, z.limitKm)} from our shop. We deliver within ${formatKm(z.limitKm)} of Mirza Bazaar, Udaipur.`
+  )
+}
 
 const MAX_FAILED = 5
 const LOCK_MINUTES = 15
@@ -118,6 +132,7 @@ const MAX_ADDRESSES = 10
 
 export async function addAddress(userId: Types.ObjectId, a: AddressInput): Promise<User> {
   await connectDB()
+  await assertDeliverable(a)
   const user = await UserModel.findById(userId)
   if (!user) throw new ApiError(404, 'User not found')
   if (user.addresses.length >= MAX_ADDRESSES) throw new ApiError(400, `You can save up to ${MAX_ADDRESSES} addresses`)
@@ -130,6 +145,7 @@ export async function addAddress(userId: Types.ObjectId, a: AddressInput): Promi
 
 export async function updateAddress(userId: Types.ObjectId, addressId: string, a: AddressInput): Promise<User> {
   await connectDB()
+  await assertDeliverable(a)
   const user = await UserModel.findById(userId)
   const addr = user?.addresses.find((x) => String(x._id) === addressId)
   if (!user || !addr) throw new ApiError(404, 'Address not found')

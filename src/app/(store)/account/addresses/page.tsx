@@ -8,6 +8,8 @@ import { useMe } from '@/lib/client/hooks'
 import { api, errorMessage } from '@/lib/client/api'
 import { AddressDialog, emptyAddress, formatAddress } from '@/components/common/address-form'
 import { EmptyState } from '@/components/common/empty-state'
+import { useDeliveryZone } from '@/components/common/delivery-zone'
+import { formatKm, formatKmAway } from '@/lib/geo'
 import type { Address, User } from '@/lib/types'
 
 export default function AddressesPage() {
@@ -16,6 +18,7 @@ export default function AddressesPage() {
   const [editing, setEditing] = useState<Address | null>(null)
   const [open, setOpen] = useState(false)
   const addresses = user?.addresses || []
+  const zone = useDeliveryZone()
 
   async function remove(a: Address) {
     if (!confirm(`Delete the "${a.label}" address?`)) return
@@ -56,6 +59,11 @@ export default function AddressesPage() {
               </div>
               <p className="mt-2 text-sm font-semibold">{a.name} · {a.phone}</p>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{formatAddress(a)}</p>
+              {(() => {
+                const z = zone.check(a)
+                if (z.ok) return zone.limited ? <p className="mt-1.5 text-xs font-semibold text-brand-700">✓ Within delivery area · {formatKm(z.km)} from shop</p> : null
+                return <p className="mt-1.5 text-xs font-bold text-red-600">{z.reason === 'no-location' ? '⚠ Location not pinned — edit to add it before ordering' : `⚠ ${formatKmAway(z.km!, z.limitKm)} away — outside our ${formatKm(z.limitKm)} delivery area`}</p>
+              })()}
               <div className="mt-4 flex flex-wrap gap-2">
                 <button onClick={() => { setEditing(a); setOpen(true) }} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold ring-1 ring-border hover:bg-cream"><Pencil className="h-3.5 w-3.5" /> Edit</button>
                 {!a.isDefault && <button onClick={() => makeDefault(a)} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold ring-1 ring-border hover:bg-cream"><Star className="h-3.5 w-3.5" /> Make default</button>}

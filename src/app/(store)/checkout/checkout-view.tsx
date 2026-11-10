@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -9,7 +9,9 @@ import { Banknote, Check, ChevronLeft, MapPin, Plus, Smartphone, Tag, X, Loader2
 import { useCartLines, useMe, useSettings } from '@/lib/client/hooks'
 import { useCart, useHydrated } from '@/lib/cart-store'
 import { api, errorMessage } from '@/lib/client/api'
-import { computeDeliveryFee, roundMoney, type Order, type PaymentMethod } from '@/lib/types'
+import { computeDeliveryFee, roundMoney, type Address, type Order, type PaymentMethod } from '@/lib/types'
+import { useDeliveryZone } from '@/components/common/delivery-zone'
+import { formatKm, formatKmAway } from '@/lib/geo'
 import { formatINR } from '@/lib/format'
 import { AddressDialog, emptyAddress, formatAddress } from '@/components/common/address-form'
 import { ProductImage } from '@/components/common/product-image'
@@ -27,8 +29,13 @@ export function CheckoutView() {
   const setSavedCoupon = useCart((s) => s.setCoupon)
 
   const addresses = user?.addresses || []
+  const zone = useDeliveryZone()
+  const deliverable = (a: Address) => zone.check(a).ok
   const [addressId, setAddressId] = useState<string | null>(null)
-  const selectedId = addressId ?? (addresses.find((a) => a.isDefault) || addresses[0])?.id ?? null
+  const [editAddr, setEditAddr] = useState<Address | null>(null)
+  // default choice: the default address if deliverable, else the first deliverable one
+  const selectedId =
+    addressId ?? (addresses.find((a) => a.isDefault && deliverable(a)) || addresses.find(deliverable))?.id ?? null
   const selected = addresses.find((a) => a.id === selectedId)
   const [addrOpen, setAddrOpen] = useState(false)
 
@@ -46,10 +53,8 @@ export function CheckoutView() {
   const delivery = computeDeliveryFee(afterDiscount, settings)
   const total = roundMoney(afterDiscount + delivery)
 
-  const pincodeOk = useMemo(
-    () => !selected || settings.serviceablePincodes.length === 0 || settings.serviceablePincodes.includes(selected.pincode),
-    [selected, settings.serviceablePincodes]
-  )
+  const zoneOk = !selected || zone.check(selected).ok
+  const pincodeOk = !selected || settings.serviceablePincodes.length === 0 || settings.serviceablePincodes.includes(selected.pincode)
 
   async function applyCoupon(code = couponInput) {
     if (!code.trim()) return
@@ -105,7 +110,7 @@ export function CheckoutView() {
     )
   }
 
-  const canPlace = !!selected && !!pay && pincodeOk && problems.length === 0 && subtotal >= settings.minOrderValue && settings.storeOpen && !placing
+  const canPlace = !!selected && !!pay && pincodeOk && zoneOk && problems.length === 0 && subtotal >= settings.minOrderValue && settings.storeOpen && !placing
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 sm:pt-8">
@@ -122,18 +127,28 @@ export function CheckoutView() {
               </button>
             ) : (
               <div className="grid gap-2.5 sm:grid-cols-2">
-                {addresses.map((a) => (
+                {addresses.map((a) => {
+                  const z = zone.check(a)
+                  return (
                   <button
                     key={a.id}
-                    onClick={() => setAddressId(a.id)}
-                    className={cn('relative rounded-2xl border-2 p-4 text-left transition', a.id === selectedId ? 'border-brand-600 bg-brand-50/60' : 'border-border bg-white hover:border-brand-300')}
+                    onClick={() => (z.ok ? setAddressId(a.id) : setEditAddr(a))}
+                    className={cn('relative rounded-2xl border-2 p-4 text-left transition', a.id === selectedId ? 'border-brand-600 bg-brand-50/60' : 'border-border bg-white hover:border-brand-300', !z.ok && 'border-dashed bg-red-50/40')}
                   >
                     {a.id === selectedId && <span className="absolute right-3 top-3 grid h-5 w-5 place-items-center rounded-full bg-brand-700 text-white"><Check className="h-3 w-3" strokeWidth={3} /></span>}
                     <p className="flex items-center gap-2 text-sm font-bold"><MapPin className="h-4 w-4 text-brand-700" /> {a.label}</p>
                     <p className="mt-1.5 text-sm font-semibold">{a.name} · {a.phone}</p>
                     <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{formatAddress(a)}</p>
+                    {z.ok ? (
+                      zone.limited && <p className="mt-2 text-xs font-semibold text-brand-700">✓ {formatKm(z.km)} from shop</p>
+                    ) : (
+                      <p className="mt-2 text-xs font-bold text-red-600">
+                        {z.reason === 'no-location' ? 'Location not pinned — tap to add it' : `${formatKmAway(z.km!, z.limitKm)} away — outside our ${formatKm(z.limitKm)} area`}
+                      </p>
+                    )}
                   </button>
-                ))}
+                  )
+                })}
                 <button onClick={() => setAddrOpen(true)} className="flex min-h-28 items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border text-sm font-bold text-brand-700 hover:border-brand-300">
                   <Plus className="h-4 w-4" /> New address
                 </button>
@@ -224,6 +239,13 @@ export function CheckoutView() {
       </div>
 
       <AddressDialog open={addrOpen} onOpenChange={setAddrOpen} initial={emptyAddress(user)} onSaved={(_, a) => a && setAddressId(a.id)} />
+      <AddressDialog
+        open={!!editAddr}
+        onOpenChange={(v) => !v && setEditAddr(null)}
+        addressId={editAddr?.id}
+        initial={editAddr ? (({ id, ...rest }) => rest)(editAddr) : emptyAddress(user)}
+        onSaved={() => editAddr && setAddressId(editAddr.id)}
+      />
     </div>
   )
 }

@@ -4,7 +4,9 @@ import Link from 'next/link'
 import { use, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ChevronLeft, Loader2, Mail, MapPin, MessageCircle, Phone, Printer, XCircle } from 'lucide-react'
+import { ChevronLeft, Loader2, Mail, MapPin, MessageCircle, Navigation, Phone, Printer, XCircle } from 'lucide-react'
+import { DeliveryMap, useDeliveryZone } from '@/components/common/delivery-zone'
+import { formatKm, googleMapsDirections, googleMapsPin } from '@/lib/geo'
 import { api, errorMessage } from '@/lib/client/api'
 import { STATUS_LABEL, nextStatuses, type Order, type OrderStatus, type PaymentStatus } from '@/lib/types'
 import { OrderTimeline, StatusBadge } from '@/components/common/order-status'
@@ -15,6 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 export default function AdminOrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const qc = useQueryClient()
+  const zone = useDeliveryZone()
   const [busy, setBusy] = useState<string | null>(null)
   const [cancelOpen, setCancelOpen] = useState(false)
   const [reason, setReason] = useState('')
@@ -46,6 +49,7 @@ export default function AdminOrderPage({ params }: { params: Promise<{ id: strin
   // primary = the next step; plus a "mark delivered" shortcut for quick hand-over
   const next = forward.length > 1 && forward[forward.length - 1] === 'DELIVERED' ? [forward[0], 'DELIVERED' as OrderStatus] : forward
   const canCancel = nextStatuses(order.status).includes('CANCELLED')
+  const pin = order.address.lat != null && order.address.lng != null ? { lat: order.address.lat, lng: order.address.lng } : null
   const phoneDigits = order.address.phone.replace(/\D/g, '')
   const wa = phoneDigits.length === 10 ? `91${phoneDigits}` : phoneDigits
 
@@ -96,7 +100,22 @@ export default function AdminOrderPage({ params }: { params: Promise<{ id: strin
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Deliver to</p>
             <p className="mt-2 text-sm font-bold">{order.address.name} · {order.address.phone}</p>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{formatAddress(order.address)}</p>
-            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatAddress(order.address))}`} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-brand-700"><MapPin className="h-3.5 w-3.5" /> Open in Maps</a>
+            {pin ? (
+              <>
+                <div className="mt-3 h-44 overflow-hidden rounded-2xl ring-1 ring-border">
+                  <DeliveryMap store={zone.store ?? pin} radiusKm={zone.radiusKm} pin={pin} />
+                </div>
+                <p className="mt-2 text-xs font-semibold text-muted-foreground">
+                  {order.distanceKm != null ? `${formatKm(order.distanceKm)} from shop (straight line)` : 'Pinned location'}
+                </p>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <a href={googleMapsDirections(pin, zone.store ?? undefined)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-brand-700 py-2 text-xs font-bold text-white hover:bg-brand-800"><Navigation className="h-3.5 w-3.5" /> Directions</a>
+                  <a href={googleMapsPin(pin)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-cream py-2 text-xs font-bold hover:bg-cream-200"><MapPin className="h-3.5 w-3.5 text-brand-700" /> Open pin</a>
+                </div>
+              </>
+            ) : (
+              <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formatAddress(order.address))}`} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-brand-700"><MapPin className="h-3.5 w-3.5" /> Search address in Maps</a>
+            )}
             {order.note && <p className="mt-3 rounded-xl bg-saffron-50 p-2.5 text-xs text-saffron-800"><b>Customer note:</b> {order.note}</p>}
           </div>
           <div className="rounded-3xl bg-white p-5 ring-1 ring-border">

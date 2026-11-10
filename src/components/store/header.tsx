@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Heart, LayoutDashboard, LogOut, MapPin, Pack
 import { Logo } from '@/components/common/logo'
 import { SearchBox } from './search-box'
 import { CategoryArt } from './category-tile'
+import { DeliveryCheck } from '@/components/common/delivery-zone'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -23,14 +24,16 @@ function AnnouncementBar() {
     (settings.freeDeliveryAbove > 0 ? `Free delivery on orders above ${formatINR(settings.freeDeliveryAbove)}` : 'Fresh groceries delivered to your door')
   return (
     <div className="bg-brand-900 text-white print:hidden">
-      <div className="mx-auto flex h-9 max-w-7xl items-center justify-center gap-6 px-4 text-xs font-medium sm:justify-between">
-        <p className="flex items-center gap-2 truncate">
+      <div className="mx-auto flex h-9 max-w-7xl items-center justify-between gap-3 px-4 text-xs font-medium">
+        <p className="flex min-w-0 items-center gap-2 truncate">
           <Truck className="h-3.5 w-3.5 shrink-0 text-leaf-300" />
           <span className="truncate">{msg}</span>
           {!settings.storeOpen && <span className="rounded-full bg-saffron-500 px-2 py-0.5 text-[10px] font-bold">Not taking orders right now</span>}
         </p>
+        <DeliveryCheck compact className="shrink-0 sm:hidden" />
         <div className="hidden items-center gap-5 text-white/80 sm:flex">
-          <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {SITE.address.line1}, {SITE.address.city}</span>
+          <DeliveryCheck />
+          <span className="hidden items-center gap-1.5 lg:flex"><MapPin className="h-3.5 w-3.5" /> {SITE.address.line1}, {SITE.address.city}</span>
           <a href={`mailto:${SITE.email}`} className="flex items-center gap-1.5 hover:text-white"><Mail className="h-3.5 w-3.5" /> {SITE.email}</a>
         </div>
       </div>

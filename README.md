@@ -28,6 +28,13 @@ One Next.js project that deploys to Vercel as both the storefront (frontend) and
 - **Coupons**: % or flat, minimum order, max discount, expiry, total & per-customer limits
 - **Store settings**: delivery fee, free-delivery threshold, minimum order, delivery pincodes, open/closed for orders, payment methods, UPI ID, announcement bar, phone/WhatsApp/hours
 
+### 📍 Delivery area (quick commerce)
+- The shop is pinned at **23.447087, 91.414480** (Mirza Bazaar, Udaipur) with a **4 km** delivery radius; both are editable in **Admin → Store settings → Delivery area** (paste a Google Maps link or drag the pin; radius 0 = no limit).
+- Customers pin every delivery address on a map ("Use my current location" or tap/drag). Addresses outside the radius can't be saved, and every order is re-checked on the server against the current radius.
+- A **Check delivery** button in the top bar lets visitors confirm they're in range before shopping; the Contact page shows the delivery circle.
+- Orders store the exact pin and distance; the admin order page shows it on a map with one-tap Google Maps directions.
+- Distance is straight-line from the shop. Maps use OpenStreetMap (no API key needed).
+
 ### Business logic
 - Prices are always recalculated on the server; stock is reserved with atomic conditional updates (the last unit can never be sold twice) and rolled back if checkout fails
 - Cancelling an order returns its stock and frees the coupon use

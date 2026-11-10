@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { api, errorMessage } from '@/lib/client/api'
 import { addressSchema } from '@/lib/validation'
 import { SITE } from '@/lib/site'
+import { LocationPicker, useDeliveryZone, useSavedLocation } from './delivery-zone'
 import type { Address, User } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -55,14 +56,22 @@ export function AddressDialog({
   if (open !== prevOpen) {
     setPrevOpen(open)
     if (open) {
-      setForm(initial)
+      // new address: start from the location the customer already checked in the header, if any
+      const saved = useSavedLocation.getState().point
+      setForm(initial.lat == null && saved ? { ...initial, lat: saved.lat, lng: saved.lng } : initial)
       setErrors({})
     }
   }
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }))
+  const zone = useDeliveryZone()
 
   async function save() {
+    const z = zone.check(form)
+    if (!z.ok) {
+      setErrors({ lat: z.reason === 'no-location' ? 'Please pin your delivery location on the map' : 'This location is outside our delivery area' })
+      return
+    }
     const parsed = addressSchema.safeParse(form)
     if (!parsed.success) {
       const errs: Record<string, string> = {}
@@ -103,12 +112,20 @@ export function AddressDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto rounded-3xl sm:max-w-lg">
+      <DialogContent className="max-h-[94vh] overflow-y-auto rounded-3xl sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">{addressId ? 'Edit address' : 'Add delivery address'}</DialogTitle>
           <DialogDescription>We deliver from {SITE.address.line1}, {SITE.address.city}.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
+          <LocationPicker
+            value={form.lat != null && form.lng != null ? { lat: form.lat, lng: form.lng } : null}
+            onChange={(p) => {
+              setForm((f) => ({ ...f, lat: p.lat, lng: p.lng }))
+              setErrors((e) => ({ ...e, lat: '' }))
+            }}
+          />
+          {errors.lat && <p className="-mt-1 text-xs font-semibold text-red-600">{errors.lat}</p>}
           <div className="flex gap-2">
             {['Home', 'Work', 'Other'].map((l) => (
               <button key={l} type="button" onClick={() => set('label', l)} className={cn('rounded-full border px-4 py-1.5 text-sm font-semibold', form.label === l ? 'border-brand-700 bg-brand-700 text-white' : 'border-border')}>{l}</button>

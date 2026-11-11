@@ -200,6 +200,25 @@ export async function listCustomers(q?: string): Promise<CustomerRow[]> {
   })
 }
 
+/** Owner resets a customer's password (they call the shop); returns a one-time password to read out. */
+export async function adminResetPassword(actor: UserDoc, id: string): Promise<string> {
+  await connectDB()
+  if (!Types.ObjectId.isValid(id)) throw new ApiError(404, 'Customer not found')
+  if (String(actor._id) === id) throw new ApiError(400, 'Change your own password from your profile')
+  const target = await UserModel.findById(id).lean<UserDoc>()
+  if (!target) throw new ApiError(404, 'Customer not found')
+  if (target.email === ADMIN_EMAIL) throw new ApiError(400, 'The owner password is set in Vercel (ADMIN_PASSWORD)')
+  // easy to read aloud: no 0/O, 1/l/I
+  const alphabet = 'abcdefghjkmnpqrstuvwxyz23456789'
+  const bytes = (await import('crypto')).randomBytes(8)
+  const temp = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('')
+  await UserModel.updateOne(
+    { _id: id },
+    { $set: { passwordHash: hashPassword(temp), failedLogins: 0, lockUntil: null }, $inc: { tokenVersion: 1 } }
+  )
+  return temp
+}
+
 export async function adminUpdateUser(actor: UserDoc, id: string, patch: { blocked?: boolean; role?: 'customer' | 'admin' }): Promise<User> {
   await connectDB()
   if (!Types.ObjectId.isValid(id)) throw new ApiError(404, 'Customer not found')

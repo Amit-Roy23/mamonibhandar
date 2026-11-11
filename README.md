@@ -5,6 +5,9 @@
 
 One Next.js project that deploys to Vercel as both the storefront (frontend) and the API (backend), with **MongoDB** for data and **Cloudinary** for product photos.
 
+> 📘 **Going live / custom domain / handover:** [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+> 🧑‍🍳 **Shop owner's daily guide:** [docs/OWNER-GUIDE.md](docs/OWNER-GUIDE.md)
+
 ## ✨ Features
 
 ### Customer side
@@ -14,7 +17,7 @@ One Next.js project that deploys to Vercel as both the storefront (frontend) and
 - Cart with free-delivery progress, stock warnings, savings summary
 - **Accounts**: register/login with mobile number or email, profile, change password
 - **Saved addresses** (home/work), default address
-- **Checkout**: choose address, Cash or UPI on delivery, apply coupon, delivery instructions
+- **Checkout**: choose address, Cash on Delivery, apply coupon, delivery instructions
 - **My orders**: live status tracker, cancel (before packing), re-order, printable invoice
 - Wishlist, contact page, fully responsive with an app-style bottom bar on phones
 
@@ -26,7 +29,7 @@ One Next.js project that deploys to Vercel as both the storefront (frontend) and
 - **Orders**: filter by status, search, one-click status updates (Placed → Confirmed → Packed → Out for delivery → Delivered), cancel with reason (stock returned automatically), payment status, call/WhatsApp customer, print invoice
 - **Customers**: order count & total spent, block/unblock, grant admin access
 - **Coupons**: % or flat, minimum order, max discount, expiry, total & per-customer limits
-- **Store settings**: delivery fee, free-delivery threshold, minimum order, delivery pincodes, open/closed for orders, payment methods, UPI ID, announcement bar, phone/WhatsApp/hours
+- **Store settings**: delivery fee, free-delivery threshold, minimum order, delivery area, open/closed for orders, announcement bar, phone/WhatsApp/hours
 
 ### 📍 Delivery area (quick commerce)
 - The shop is pinned at **23.447087, 91.414480** (Mirza Bazaar, Udaipur) with a **4 km** delivery radius; both are editable in **Admin → Store settings → Delivery area** (paste a Google Maps link or drag the pin; radius 0 = no limit).
@@ -38,7 +41,7 @@ One Next.js project that deploys to Vercel as both the storefront (frontend) and
 ### Business logic
 - Prices are always recalculated on the server; stock is reserved with atomic conditional updates (the last unit can never be sold twice) and rolled back if checkout fails
 - Cancelling an order returns its stock and frees the coupon use
-- COD/UPI orders are marked paid automatically on delivery
+- Cash on Delivery is the only payment method (enforced on the server); orders are marked paid automatically on delivery
 - Sessions are signed cookies; changing a password or blocking a user logs them out everywhere; 5 wrong passwords lock the account for 15 minutes
 - Optional email alerts: new order → store inbox, confirmation & status updates → customer
 

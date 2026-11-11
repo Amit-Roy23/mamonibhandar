@@ -124,7 +124,7 @@ function ProductDetail({ product, all }: { product: Product; all: Product[] }) {
 
             <div className="mt-7 grid gap-2.5 rounded-3xl bg-white p-4 text-sm ring-1 ring-border sm:grid-cols-2">
               <Perk icon={Truck} title={settings.freeDeliveryAbove > 0 ? `Free delivery over ${formatINR(settings.freeDeliveryAbove)}` : 'Home delivery'} text={`Otherwise ${formatINR(settings.deliveryFee)} per order`} />
-              <Perk icon={Banknote} title="Pay on delivery" text="Cash or UPI when it arrives" />
+              <Perk icon={Banknote} title="Cash on Delivery" text="Pay in cash when it arrives" />
               <Perk icon={ShieldCheck} title="Quality checked" text="Packed fresh at our store" />
               <Perk icon={MapPin} title={`From ${SITE.address.line1}`} text={`${SITE.address.city}, ${SITE.address.state}`} />
             </div>

@@ -5,7 +5,7 @@ import { Suspense, useDeferredValue, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ChevronRight, ClipboardList, Search } from 'lucide-react'
+import { ChevronRight, ClipboardList, Download, Search } from 'lucide-react'
 import { PageHeader, useAdminStats } from '@/components/admin/admin-shell'
 import { StatusBadge } from '@/components/common/order-status'
 import { EmptyState } from '@/components/common/empty-state'
@@ -33,6 +33,8 @@ function OrdersView() {
   const qc = useQueryClient()
   const [status, setStatus] = useState<'ALL' | OrderStatus>((params.get('status') as OrderStatus) || 'ALL')
   const [q, setQ] = useState('')
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
   const dq = useDeferredValue(q)
   const { data: statsData } = useAdminStats()
   const counts = statsData?.stats.statusCounts || {}
@@ -59,7 +61,21 @@ function OrdersView() {
 
   return (
     <div>
-      <PageHeader title="Orders" description={userId ? 'Showing orders for one customer' : 'Newest first · refreshes automatically'} actions={userId ? <Link href="/admin/orders" className="rounded-xl bg-white px-4 py-2 text-sm font-bold ring-1 ring-border">Show all orders</Link> : undefined} />
+      <PageHeader
+        title="Orders"
+        description={userId ? 'Showing orders for one customer' : 'Newest first · refreshes automatically'}
+        actions={
+          <>
+            {userId && <Link href="/admin/orders" className="rounded-xl bg-white px-4 py-2 text-sm font-bold ring-1 ring-border">Show all orders</Link>}
+            <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-white p-1.5 ring-1 ring-border">
+              <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-8 rounded-lg bg-cream px-2 text-xs outline-none" aria-label="Export from date" />
+              <span className="text-xs text-muted-foreground">to</span>
+              <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-8 rounded-lg bg-cream px-2 text-xs outline-none" aria-label="Export to date" />
+              <a href={`/api/admin/export?type=orders&status=${status}${from ? `&from=${from}` : ''}${to ? `&to=${to}` : ''}`} className="inline-flex h-8 items-center gap-1 rounded-lg bg-brand-700 px-3 text-xs font-bold text-white hover:bg-brand-800"><Download className="h-3.5 w-3.5" /> Download CSV</a>
+            </div>
+          </>
+        }
+      />
 
       <div className="no-scrollbar mb-3 flex gap-2 overflow-x-auto">
         {(['ALL', ...ORDER_STATUSES] as const).map((s) => (

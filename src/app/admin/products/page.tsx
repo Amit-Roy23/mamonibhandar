@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { EyeOff, PackageSearch, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react'
+import { Download, EyeOff, PackageSearch, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/admin/admin-shell'
 import { Switch } from '@/components/ui/switch'
 import { ProductImage } from '@/components/common/product-image'
@@ -80,7 +80,7 @@ export default function AdminProductsPage() {
       <PageHeader
         title="Products"
         description={`${products.length} products · ${products.filter((p) => !p.active).length} hidden`}
-        actions={<Link href="/admin/products/new" className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-700 px-5 text-sm font-bold text-white hover:bg-brand-800"><Plus className="h-4 w-4" /> Add product</Link>}
+        actions={<><a href="/api/admin/export?type=products" className="inline-flex h-11 items-center gap-2 rounded-xl bg-white px-4 text-sm font-bold ring-1 ring-border hover:bg-cream"><Download className="h-4 w-4" /> CSV</a><Link href="/admin/products/new" className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-700 px-5 text-sm font-bold text-white hover:bg-brand-800"><Plus className="h-4 w-4" /> Add product</Link></>}
       />
 
       <div className="mb-4 flex flex-col gap-3 rounded-3xl bg-white p-3 ring-1 ring-border sm:flex-row sm:items-center">

@@ -22,6 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${p.name} (${p.unit})`,
       description: p.description || `Buy ${p.name} online from MB Mart, Udaipur.`,
       openGraph: { title: p.name, description: p.description, images: [img] },
+      alternates: { canonical: `/product/${p.id}` },
     }
   } catch {
     return { title: 'Product' }

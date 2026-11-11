@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { LIMITS, clientIp, rateLimit } from '@/lib/server/rate-limit'
 import { route, body, ok } from '@/lib/server/http'
 import { requireUser } from '@/lib/server/auth'
 import { checkCoupon } from '@/lib/server/coupons'
@@ -7,6 +8,7 @@ const schema = z.object({ code: z.string().trim().min(1, 'Enter a coupon code').
 
 export const POST = route(async (req) => {
   const user = await requireUser(req)
+  await rateLimit('coupon', String(user._id), LIMITS.coupon.limit, LIMITS.coupon.windowSec)
   const { code, subtotal } = await body(req, schema)
   const { coupon, discount } = await checkCoupon(code, subtotal, user._id)
   return ok({ code: coupon.code, description: coupon.description, discount })

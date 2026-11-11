@@ -69,7 +69,8 @@ export const placeOrderSchema = z.object({
     .min(1, 'Your cart is empty')
     .max(100),
   addressId: z.string().min(1, 'Please choose a delivery address'),
-  paymentMethod: z.enum(['COD', 'UPI']),
+  // the store accepts Cash on Delivery only
+  paymentMethod: z.literal('COD', { error: 'We accept Cash on Delivery only' }).default('COD'),
   couponCode: z.string().trim().max(30).optional(),
   note: z.string().trim().max(300).optional(),
 })

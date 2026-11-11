@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Mail, MapPin, Phone, Clock, Banknote, Smartphone, Truck } from 'lucide-react'
+import { Mail, MapPin, Phone, Clock, Banknote, Truck } from 'lucide-react'
 import { Logo } from '@/components/common/logo'
 import { useCategories, useSettings } from '@/lib/client/hooks'
 import { SITE } from '@/lib/site'
@@ -23,7 +23,6 @@ export function StoreFooter() {
             </p>
             <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold">
               <span className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5"><Banknote className="h-3.5 w-3.5" /> Cash on Delivery</span>
-              <span className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5"><Smartphone className="h-3.5 w-3.5" /> UPI on Delivery</span>
             </div>
           </div>
 
@@ -70,7 +69,11 @@ export function StoreFooter() {
         <div className="border-t border-white/10">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-white/50 sm:flex-row sm:px-6">
             <p>© {year} {SITE.legalName} ({SITE.name}). All rights reserved.</p>
-            <p>Udaipur · Gomati · Tripura</p>
+            <p className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+              <Link href="/privacy" className="hover:text-white">Privacy</Link>
+              <Link href="/terms" className="hover:text-white">Terms</Link>
+              <Link href="/refund-policy" className="hover:text-white">Cancellation &amp; refunds</Link>
+            </p>
           </div>
         </div>
       </div>

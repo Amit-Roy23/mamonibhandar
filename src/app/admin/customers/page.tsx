@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { useDeferredValue, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Ban, Search, ShieldCheck, Users } from 'lucide-react'
+import { Ban, Download, KeyRound, Search, ShieldCheck, Users } from 'lucide-react'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { PageHeader } from '@/components/admin/admin-shell'
 import { EmptyState } from '@/components/common/empty-state'
 import { api, errorMessage } from '@/lib/client/api'
@@ -21,6 +22,18 @@ export default function CustomersPage() {
   const { data, isLoading } = useQuery({ queryKey: ['admin-customers', dq], queryFn: () => api<{ customers: CustomerRow[] }>(`/api/admin/customers?q=${encodeURIComponent(dq)}`) })
   const customers = data?.customers || []
 
+  const [temp, setTemp] = useState<{ name: string; phone?: string; password: string } | null>(null)
+
+  async function resetPassword(c: CustomerRow) {
+    if (!confirm(`Reset the password for ${c.name}? They will be logged out everywhere and must use the new temporary password.`)) return
+    try {
+      const r = await api<{ tempPassword: string }>(`/api/admin/customers/${c.id}`, { method: 'PATCH', body: { resetPassword: true } })
+      setTemp({ name: c.name, phone: c.phone, password: r.tempPassword })
+    } catch (e) {
+      toast.error(errorMessage(e))
+    }
+  }
+
   async function patch(c: CustomerRow, body: { blocked?: boolean; role?: 'customer' | 'admin' }, msg: string) {
     if (body.role === 'admin' && !confirm(`Give ${c.name} full admin access? They will be able to manage products, orders and settings.`)) return
     if (body.blocked && !confirm(`Block ${c.name}? They will be logged out and unable to order.`)) return
@@ -35,7 +48,7 @@ export default function CustomersPage() {
 
   return (
     <div>
-      <PageHeader title="Customers" description={`${customers.length} accounts`} />
+      <PageHeader title="Customers" description={`${customers.length} accounts`} actions={<a href="/api/admin/export?type=customers" className="inline-flex h-11 items-center gap-2 rounded-xl bg-white px-4 text-sm font-bold ring-1 ring-border hover:bg-cream"><Download className="h-4 w-4" /> Download CSV</a>} />
       <div className="mb-4 flex h-11 items-center gap-2 rounded-2xl bg-white px-3.5 ring-1 ring-border">
         <Search className="h-4 w-4 text-muted-foreground" />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, phone or email" className="h-full flex-1 bg-transparent text-sm outline-none" aria-label="Search customers" />
@@ -70,6 +83,7 @@ export default function CustomersPage() {
                 {me?.id !== c.id && (
                   <>
                     <button onClick={() => patch(c, { blocked: !c.blocked }, c.blocked ? 'Customer unblocked' : 'Customer blocked')} className={cn('inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold ring-1', c.blocked ? 'ring-border hover:bg-cream' : 'text-red-600 ring-red-200 hover:bg-red-50')}><Ban className="h-3.5 w-3.5" /> {c.blocked ? 'Unblock' : 'Block'}</button>
+                    <button onClick={() => resetPassword(c)} className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold ring-1 ring-border hover:bg-cream"><KeyRound className="h-3.5 w-3.5" /> Reset password</button>
                     <button onClick={() => patch(c, { role: c.role === 'admin' ? 'customer' : 'admin' }, c.role === 'admin' ? 'Admin access removed' : 'Admin access granted')} className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold ring-1 ring-border hover:bg-cream"><ShieldCheck className="h-3.5 w-3.5" /> {c.role === 'admin' ? 'Remove admin' : 'Make admin'}</button>
                   </>
                 )}
@@ -78,6 +92,17 @@ export default function CustomersPage() {
           ))}
         </div>
       )}
+
+      <Dialog open={!!temp} onOpenChange={(v) => !v && setTemp(null)}>
+        <DialogContent className="rounded-3xl sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display">New password for {temp?.name}</DialogTitle>
+            <DialogDescription>Tell the customer this password{temp?.phone ? ` (call ${temp.phone})` : ''}. They should change it from Profile after logging in. It is shown only once.</DialogDescription>
+          </DialogHeader>
+          <p className="select-all rounded-2xl bg-cream py-4 text-center font-mono text-2xl font-extrabold tracking-widest">{temp?.password}</p>
+          <button onClick={() => { navigator.clipboard?.writeText(temp?.password || ''); toast.success('Copied') }} className="h-11 rounded-xl bg-brand-700 font-bold text-white hover:bg-brand-800">Copy password</button>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

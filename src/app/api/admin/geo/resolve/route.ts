@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { LIMITS, clientIp, rateLimit } from '@/lib/server/rate-limit'
 import { route, body, ok, ApiError } from '@/lib/server/http'
 import { requireAdmin } from '@/lib/server/auth'
 import { parseLatLng } from '@/lib/geo'
@@ -10,7 +11,8 @@ const ALLOWED = new Set(['maps.app.goo.gl', 'goo.gl', 'google.com', 'www.google.
 
 /** Admin pastes a Google Maps link (short or long) or "lat, lng" → returns the coordinates. */
 export const POST = route(async (req) => {
-  await requireAdmin(req)
+  const admin = await requireAdmin(req)
+  await rateLimit('geo', String(admin._id), LIMITS.geo.limit, LIMITS.geo.windowSec)
   const { url } = await body(req, schema)
 
   const direct = parseLatLng(url)

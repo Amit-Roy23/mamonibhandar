@@ -424,6 +424,26 @@ const BannerSchema = new Schema<BannerDoc>(
 )
 
 /* ================================================================== */
+/* RateLimit (fixed-window counters, auto-deleted by a TTL index)     */
+/* ================================================================== */
+
+export interface RateLimitDoc {
+  _id: string // "<bucket>:<key>:<window>"
+  count: number
+  expiresAt: Date
+}
+
+const RateLimitSchema = new Schema<RateLimitDoc>(
+  {
+    _id: { type: String, required: true },
+    count: { type: Number, default: 0 },
+    expiresAt: { type: Date, required: true },
+  },
+  { versionKey: false }
+)
+RateLimitSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 })
+
+/* ================================================================== */
 /* Model registration (re-used across hot reloads / warm invocations) */
 /* ================================================================== */
 
@@ -438,3 +458,4 @@ export const OrderModel = model<OrderDoc>('Order', OrderSchema)
 export const CouponModel = model<CouponDoc>('Coupon', CouponSchema)
 export const SettingsModel = model<SettingsDoc>('Settings', SettingsSchema)
 export const BannerModel = model<BannerDoc>('Banner', BannerSchema)
+export const RateLimitModel = model<RateLimitDoc>('RateLimit', RateLimitSchema)

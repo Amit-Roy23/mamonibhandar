@@ -77,8 +77,6 @@ export async function placeOrder(user: UserDoc, input: PlaceOrderInput): Promise
   const settings = await getSettings()
 
   if (!settings.storeOpen) throw new ApiError(400, 'Sorry, we are not accepting orders right now. Please try again later.')
-  if (input.paymentMethod === 'COD' && !settings.codEnabled) throw new ApiError(400, 'Cash on Delivery is currently unavailable')
-  if (input.paymentMethod === 'UPI' && !settings.upiEnabled) throw new ApiError(400, 'UPI on Delivery is currently unavailable')
 
   const address = (user.addresses || []).find((a) => String(a._id) === input.addressId)
   if (!address) throw new ApiError(400, 'Please choose a delivery address')
@@ -186,7 +184,7 @@ export async function placeOrder(user: UserDoc, input: PlaceOrderInput): Promise
     couponCode,
     deliveryFee,
     total: roundMoney(afterDiscount + deliveryFee),
-    paymentMethod: input.paymentMethod,
+    paymentMethod: 'COD' as PaymentMethod, // Cash on Delivery is the only payment method
     paymentStatus: 'PENDING' as PaymentStatus,
     status: 'PLACED' as OrderStatus,
     statusHistory: [{ status: 'PLACED' as OrderStatus, at: now, by: 'customer' as const }],

@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     template: `%s · ${SITE.name}`,
   },
   description:
-    'Order fresh groceries, staples, snacks and daily essentials online from MB Mart (Maamoni Bhandar), Mirza Bazaar, Udaipur, Gomati, Tripura. Cash or UPI on delivery.',
+    'Order fresh groceries, staples, snacks and daily essentials online from MB Mart (Maamoni Bhandar), Mirza Bazaar, Udaipur, Gomati, Tripura. Cash on Delivery.',
   keywords: ['MB Mart', 'Maamoni Bhandar', 'grocery Udaipur Tripura', 'Mirza Bazaar', 'online grocery Gomati', 'grocery delivery Tripura'],
   openGraph: {
     title: `${SITE.name} · ${SITE.legalName}`,

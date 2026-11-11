@@ -46,7 +46,7 @@ export const getStorefront = unstable_cache(loadStorefront, ['storefront-v2'], {
 /* Seeding + data migrations                                          */
 /* ================================================================== */
 
-const DATA_VERSION = 5
+const DATA_VERSION = 6
 let seeded = false
 
 function isDupOnly(e: any) {
@@ -104,8 +104,8 @@ export async function ensureSeeded(): Promise<void> {
     { $set: { eyebrow: 'Cash on Delivery', title: 'Pay in cash when your order arrives' } }
   )
   // v3: build indexes once (autoIndex is off in production to keep cold starts fast)
-  const { UserModel, OrderModel, CouponModel } = await import('./models')
-  await Promise.all([UserModel, OrderModel, CouponModel, ProductModel, CategoryModel, BannerModel].map((m) => m.createIndexes().catch((e) => console.error('createIndexes', m.modelName, e))))
+  const { UserModel, OrderModel, CouponModel, RateLimitModel } = await import('./models')
+  await Promise.all([UserModel, OrderModel, CouponModel, ProductModel, CategoryModel, BannerModel, RateLimitModel].map((m) => m.createIndexes().catch((e) => console.error('createIndexes', m.modelName, e))))
   await SettingsModel.updateOne({ _id: 'store' }, { $set: { dataVersion: DATA_VERSION } }, { upsert: true })
   seeded = true
 }

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { AlertTriangle, ArrowRight, Clock, IndianRupee, Package, ShoppingCart, TrendingUp, Users } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { PageHeader, useAdminStats } from '@/components/admin/admin-shell'
+import { SystemStatus } from '@/components/admin/system-status'
 import { StatusBadge } from '@/components/common/order-status'
 import { ProductImage } from '@/components/common/product-image'
 import { formatINR } from '@/lib/format'
@@ -41,6 +42,8 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-5">
       <PageHeader title={`${greet}${user ? `, ${user.name.split(' ')[0]}` : ''} 👋`} description="Here's how MB Mart is doing today." actions={<Link href="/admin/products/new" className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-700 px-5 text-sm font-bold text-white hover:bg-brand-800">+ Add product</Link>} />
+
+      <SystemStatus compact />
 
       {s.pendingOrders > 0 && (
         <Link href="/admin/orders?status=PLACED" className="flex items-center justify-between gap-3 rounded-3xl bg-saffron-500 p-4 text-white shadow-sm hover:bg-saffron-600 sm:p-5">

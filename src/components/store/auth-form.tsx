@@ -131,7 +131,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
             {mode === 'login' ? 'Create an account' : 'Log in'}
           </Link>
         </p>
-        {mode === 'login' && <p className="mt-3 text-center text-xs text-muted-foreground">Forgot your password? Email us at <a href={`mailto:${SITE.email}`} className="font-semibold text-brand-700">{SITE.email}</a></p>}
+        {mode === 'login' && <p className="mt-3 text-center text-xs text-muted-foreground">Forgot your password? Call the store or email <a href={`mailto:${SITE.email}`} className="font-semibold text-brand-700">{SITE.email}</a> — we&apos;ll reset it for you.</p>}
       </div>
     </div>
   )

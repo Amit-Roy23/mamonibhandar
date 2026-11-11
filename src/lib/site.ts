@@ -1,5 +1,20 @@
 /* Business identity — used across the storefront, emails and invoices. */
 
+/**
+ * The public address of the site (no trailing slash). Order of preference:
+ * 1. NEXT_PUBLIC_SITE_URL (set this to your custom domain, e.g. https://mbmart.in)
+ * 2. Vercel's production domain (picks up a custom domain automatically once added)
+ * 3. the Vercel deployment URL, then localhost for development
+ */
+function siteUrl(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL && `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`) ||
+    (process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`) ||
+    'http://localhost:3000'
+  return raw.replace(/\/+$/, '')
+}
+
 export const SITE = {
   name: 'MB Mart',
   legalName: 'Maamoni Bhandar',
@@ -14,7 +29,7 @@ export const SITE = {
   },
   // the shop's exact pin (shared by the client)
   mapUrl: 'https://maps.app.goo.gl/6Ysb24Ry3uBhUGuU9',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://mamonibhandar.vercel.app',
+  url: siteUrl(),
 } as const
 
 export const SITE_ADDRESS_ONE_LINE = `${SITE.address.line1}, ${SITE.address.city}, ${SITE.address.district}, ${SITE.address.state} ${SITE.address.pincode}`

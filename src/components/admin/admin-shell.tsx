@@ -4,12 +4,12 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
 import { BadgePercent, GalleryHorizontalEnd, LayoutDashboard, LogOut, Menu, Package, Settings, ShoppingCart, Store, Tags, Users } from 'lucide-react'
+import { useAdminStats } from './use-admin-stats'
+import { AlertToggles, NewOrderWatcher } from './new-order-alert'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { isLoggingOut, useLogout, useMe } from '@/lib/client/hooks'
 import { api } from '@/lib/client/api'
-import type { DashboardStats } from '@/lib/server/stats'
 import { SITE } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
@@ -24,13 +24,7 @@ const NAV = [
   { href: '/admin/settings', label: 'Store settings', icon: Settings },
 ]
 
-export function useAdminStats() {
-  return useQuery({
-    queryKey: ['admin-stats'],
-    queryFn: () => api<{ stats: DashboardStats }>('/api/admin/stats'),
-    refetchInterval: 30_000,
-  })
-}
+export { useAdminStats } from './use-admin-stats'
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname()
@@ -73,6 +67,7 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
       </Link>
       <NavLinks onNavigate={onNavigate} />
       <div className="mt-auto space-y-1 border-t border-sidebar-border pt-4">
+        <div className="pb-2"><AlertToggles /></div>
         <Link href="/" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-white"><Store className="h-[18px] w-[18px]" /> View store</Link>
         <button onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-white"><LogOut className="h-[18px] w-[18px]" /> Log out</button>
         {user && <p className="truncate px-3 pt-2 text-xs text-sidebar-foreground/50">Signed in as {user.email || user.phone}</p>}
@@ -99,6 +94,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[#f5f3ee] lg:pl-64">
+      {user?.role === 'admin' && <NewOrderWatcher />}
       <aside className="fixed inset-y-0 left-0 hidden w-64 lg:block print:hidden"><SidebarBody /></aside>
 
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-white/90 px-4 backdrop-blur lg:hidden print:hidden">

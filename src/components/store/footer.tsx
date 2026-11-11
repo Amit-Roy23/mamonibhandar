@@ -69,7 +69,11 @@ export function StoreFooter() {
         <div className="border-t border-white/10">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-white/50 sm:flex-row sm:px-6">
             <p>© {year} {SITE.legalName} ({SITE.name}). All rights reserved.</p>
-            <p>Udaipur · Gomati · Tripura</p>
+            <p className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+              <Link href="/privacy" className="hover:text-white">Privacy</Link>
+              <Link href="/terms" className="hover:text-white">Terms</Link>
+              <Link href="/refund-policy" className="hover:text-white">Cancellation &amp; refunds</Link>
+            </p>
           </div>
         </div>
       </div>

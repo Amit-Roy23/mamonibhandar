@@ -5,6 +5,9 @@
 
 One Next.js project that deploys to Vercel as both the storefront (frontend) and the API (backend), with **MongoDB** for data and **Cloudinary** for product photos.
 
+> 📘 **Going live / custom domain / handover:** [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+> 🧑‍🍳 **Shop owner's daily guide:** [docs/OWNER-GUIDE.md](docs/OWNER-GUIDE.md)
+
 ## ✨ Features
 
 ### Customer side

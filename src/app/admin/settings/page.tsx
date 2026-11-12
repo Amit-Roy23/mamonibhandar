@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ExternalLink, Loader2, MapPin } from 'lucide-react'
+import { ExternalLink, KeyRound, Loader2, MapPin } from 'lucide-react'
+import { changePasswordSchema } from '@/lib/validation'
 import { DeliveryMap } from '@/components/common/delivery-zone'
 import { formatKm, googleMapsPin, DEFAULT_STORE_LOCATION } from '@/lib/geo'
 import { PageHeader } from '@/components/admin/admin-shell'
@@ -57,6 +58,7 @@ function SettingsForm({ initial }: { initial: StoreSettings }) {
       <PageHeader title="Store settings" description="Delivery charges, payments, and contact details shown to customers" actions={<button onClick={save} disabled={saving} className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-700 px-6 text-sm font-bold text-white hover:bg-brand-800 disabled:opacity-60">{saving && <Loader2 className="h-4 w-4 animate-spin" />} Save settings</button>} />
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="lg:col-span-2"><SystemStatus /></div>
+        <OwnerPasswordSection />
         <section className="space-y-4 rounded-3xl bg-white p-5 ring-1 ring-border">
           <h2 className="font-bold">Orders</h2>
           <label className="flex items-center justify-between gap-4 rounded-2xl bg-cream p-4">
@@ -158,6 +160,50 @@ function DeliveryAreaSection({ s, set }: { s: StoreSettings; set: <K extends key
           <DeliveryMap store={store} radiusKm={s.deliveryRadiusKm} pin={store} editStore onPinChange={(p) => { set('storeLat', p.lat); set('storeLng', p.lng) }} />
         </div>
       </div>
+    </section>
+  )
+}
+
+/** The owner (or any admin) changes their own password. Other devices are signed out. */
+function OwnerPasswordSection() {
+  const qc = useQueryClient()
+  const [f, setF] = useState({ current: '', next: '', confirm: '' })
+  const [saving, setSaving] = useState(false)
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault()
+    if (f.next.length < 10) return toast.error('Use at least 10 characters for the admin password')
+    if (f.next !== f.confirm) return toast.error('The new passwords do not match')
+    const parsed = changePasswordSchema.safeParse({ current: f.current, next: f.next })
+    if (!parsed.success) return toast.error(parsed.error.issues[0].message)
+    setSaving(true)
+    try {
+      await api('/api/account/password', { body: parsed.data })
+      toast.success('Password changed. Use the new password next time you log in; other devices have been signed out.')
+      setF({ current: '', next: '', confirm: '' })
+      qc.invalidateQueries({ queryKey: ['admin-health'] })
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <section id="password" className="scroll-mt-20 space-y-4 rounded-3xl bg-white p-5 ring-1 ring-border lg:col-span-2">
+      <div>
+        <h2 className="flex items-center gap-2 font-bold"><KeyRound className="h-4 w-4 text-brand-700" /> Owner password</h2>
+        <p className="text-xs text-muted-foreground">Change the password you use to log in to this admin panel. At least 10 characters — a short sentence is easy to remember.</p>
+      </div>
+      <form onSubmit={save} className="grid gap-3 sm:grid-cols-3">
+        <label className="block space-y-1.5"><span className="text-sm font-semibold">Current password</span><input type="password" className={inputCls} value={f.current} onChange={(e) => setF({ ...f, current: e.target.value })} autoComplete="current-password" /></label>
+        <label className="block space-y-1.5"><span className="text-sm font-semibold">New password</span><input type="password" className={inputCls} value={f.next} onChange={(e) => setF({ ...f, next: e.target.value })} autoComplete="new-password" minLength={10} /></label>
+        <label className="block space-y-1.5"><span className="text-sm font-semibold">Confirm new password</span><input type="password" className={inputCls} value={f.confirm} onChange={(e) => setF({ ...f, confirm: e.target.value })} autoComplete="new-password" /></label>
+        <div className="flex flex-wrap items-center gap-3 sm:col-span-3">
+          <button disabled={saving || !f.current || !f.next} className="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-700 px-6 text-sm font-bold text-white hover:bg-brand-800 disabled:opacity-50">{saving && <Loader2 className="h-4 w-4 animate-spin" />} Change password</button>
+          <p className="text-xs text-muted-foreground">Forgot it? Your developer can let you back in by changing ADMIN_PASSWORD in Vercel.</p>
+        </div>
+      </form>
     </section>
   )
 }

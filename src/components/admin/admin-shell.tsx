@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { BadgePercent, GalleryHorizontalEnd, LayoutDashboard, LogOut, Menu, Package, Settings, ShoppingCart, Store, Tags, Users } from 'lucide-react'
+import { BadgePercent, GalleryHorizontalEnd, KeyRound, LayoutDashboard, LogOut, Menu, Package, Settings, ShoppingCart, Store, Tags, Users } from 'lucide-react'
 import { useAdminStats } from './use-admin-stats'
 import { AlertToggles, NewOrderWatcher } from './new-order-alert'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
@@ -69,6 +69,7 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
       <div className="mt-auto space-y-1 border-t border-sidebar-border pt-4">
         <div className="pb-2"><AlertToggles /></div>
         <Link href="/" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-white"><Store className="h-[18px] w-[18px]" /> View store</Link>
+        <Link href="/admin/settings#password" onClick={onNavigate} className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-white"><KeyRound className="h-[18px] w-[18px]" /> Change password</Link>
         <button onClick={logout} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-white"><LogOut className="h-[18px] w-[18px]" /> Log out</button>
         {user && <p className="truncate px-3 pt-2 text-xs text-sidebar-foreground/50">Signed in as {user.email || user.phone}</p>}
       </div>

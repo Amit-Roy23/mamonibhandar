@@ -3,7 +3,7 @@ import { connectDB } from './mongodb'
 import { OrderModel, UserModel, type UserDoc } from './models'
 import { toUser } from './mappers'
 import { ApiError } from './http'
-import { ADMIN_EMAIL, hashPassword, isEnvAdminLogin, verifyPassword } from './auth'
+import { ADMIN_EMAIL, envAdminPassword, hashPassword, isEnvAdminLogin, verifyPassword } from './auth'
 import type { Address, User } from '../types'
 import { getSettings } from './settings'
 import { checkZone, formatKm, formatKmAway } from '../geo'
@@ -42,23 +42,63 @@ export async function registerUser(i: { name: string; phone: string; email?: str
   return doc.toObject() as UserDoc
 }
 
-/** Login with phone or email. Locks the account for 15 min after 5 wrong passwords. */
-export async function authenticate(identifier: string, password: string): Promise<UserDoc> {
-  await connectDB()
-  const id = identifier.trim()
+/** A wrong password: count it, and lock the account for 15 minutes after 5 in a row. */
+async function recordFailedLogin(user: UserDoc) {
+  const failed = (user.failedLogins || 0) + 1
+  await UserModel.updateOne(
+    { _id: user._id },
+    failed >= MAX_FAILED
+      ? { $set: { failedLogins: 0, lockUntil: new Date(Date.now() + LOCK_MINUTES * 60_000) } }
+      : { $set: { failedLogins: failed } }
+  )
+}
 
-  // Owner account from env vars (works even on an empty database).
-  if (isEnvAdminLogin(id, password)) {
+/**
+ * Owner login rules:
+ * - until the owner sets their own password in the admin panel, only ADMIN_PASSWORD (Vercel) works;
+ * - after that, only the owner's own password works;
+ * - recovery: if ADMIN_PASSWORD in Vercel is changed later, the new Vercel password works again
+ *   (and the owner can then set a fresh password of their own).
+ */
+async function authenticateOwner(password: string): Promise<UserDoc> {
+  const owner = await UserModel.findOne({ email: ADMIN_EMAIL }).lean<UserDoc>()
+  if (owner?.lockUntil && new Date(owner.lockUntil).getTime() > Date.now()) {
+    throw new ApiError(429, 'Too many wrong attempts. Please try again in a few minutes.')
+  }
+  const envPw = envAdminPassword()
+  const recovering = !!(owner?.ownPassword && envPw && owner.envPwHash && !verifyPassword(envPw, owner.envPwHash))
+  const useEnv = !owner?.ownPassword || recovering
+
+  if (useEnv ? isEnvAdminLogin(ADMIN_EMAIL, password) : verifyPassword(password, owner!.passwordHash)) {
     const admin = await UserModel.findOneAndUpdate(
       { email: ADMIN_EMAIL },
       {
-        $set: { role: 'admin', blocked: false, failedLogins: 0, lockUntil: null },
-        $setOnInsert: { name: 'Store Admin', email: ADMIN_EMAIL, passwordHash: hashPassword(password), tokenVersion: 0 },
+        $set: {
+          role: 'admin',
+          blocked: false,
+          failedLogins: 0,
+          lockUntil: null,
+          // recovery login: back to the Vercel password until the owner sets a new one
+          ...(recovering ? { ownPassword: false, passwordHash: hashPassword(password) } : {}),
+        },
+        ...(recovering ? { $inc: { tokenVersion: 1 }, $unset: { envPwHash: '' } } : {}),
+        $setOnInsert: { name: 'Store Admin', email: ADMIN_EMAIL, ...(recovering ? {} : { passwordHash: hashPassword(password), tokenVersion: 0 }) },
       },
       { upsert: true, new: true }
     ).lean<UserDoc>()
     return admin!
   }
+  if (owner) await recordFailedLogin(owner)
+  await delay(400)
+  throw new ApiError(401, 'Incorrect phone/email or password')
+}
+
+/** Login with phone or email. Locks the account for 15 min after 5 wrong passwords. */
+export async function authenticate(identifier: string, password: string): Promise<UserDoc> {
+  await connectDB()
+  const id = identifier.trim()
+
+  if (id.toLowerCase() === ADMIN_EMAIL) return authenticateOwner(password)
 
   const query = id.includes('@') ? { email: id.toLowerCase() } : { phone: normalisePhone(id) }
   const user = await UserModel.findOne(query).lean<UserDoc>()
@@ -70,13 +110,7 @@ export async function authenticate(identifier: string, password: string): Promis
     throw new ApiError(429, 'Too many wrong attempts. Please try again in a few minutes.')
   }
   if (!verifyPassword(password, user.passwordHash)) {
-    const failed = (user.failedLogins || 0) + 1
-    await UserModel.updateOne(
-      { _id: user._id },
-      failed >= MAX_FAILED
-        ? { $set: { failedLogins: 0, lockUntil: new Date(Date.now() + LOCK_MINUTES * 60_000) } }
-        : { $set: { failedLogins: failed } }
-    )
+    await recordFailedLogin(user)
     await delay(400)
     throw new ApiError(401, 'Incorrect phone/email or password')
   }
@@ -98,6 +132,7 @@ export async function updateProfile(userId: Types.ObjectId, i: { name: string; p
   }
   if (i.email !== undefined) {
     const email = i.email.trim().toLowerCase()
+    if (email && email === ADMIN_EMAIL) throw new ApiError(409, 'This email is reserved')
     if (email) {
       if (await UserModel.exists({ email, _id: { $ne: userId } })) throw new ApiError(409, 'This email is already registered')
       set.email = email
@@ -116,10 +151,24 @@ export async function updateProfile(userId: Types.ObjectId, i: { name: string; p
 /** Changing the password logs out every other session (tokenVersion bump). */
 export async function changePassword(user: UserDoc, current: string, next: string): Promise<UserDoc> {
   await connectDB()
-  if (!verifyPassword(current, user.passwordHash)) throw new ApiError(400, 'Your current password is incorrect')
+  const isOwner = user.email === ADMIN_EMAIL
+  // the owner's "current" password is the Vercel one until they have set their own
+  const currentOk = isOwner && !user.ownPassword ? isEnvAdminLogin(ADMIN_EMAIL, current) : verifyPassword(current, user.passwordHash)
+  if (!currentOk) throw new ApiError(400, 'Your current password is incorrect')
+  if (user.role === 'admin' && next.length < 10) throw new ApiError(400, 'Admin passwords must be at least 10 characters')
+  if (next === current) throw new ApiError(400, 'Choose a password different from the current one')
+  const envPw = envAdminPassword()
   const res = await UserModel.findByIdAndUpdate(
     user._id,
-    { $set: { passwordHash: hashPassword(next) }, $inc: { tokenVersion: 1 } },
+    {
+      $set: {
+        passwordHash: hashPassword(next),
+        failedLogins: 0,
+        lockUntil: null,
+        ...(isOwner ? { ownPassword: true, ...(envPw ? { envPwHash: hashPassword(envPw) } : {}) } : {}),
+      },
+      $inc: { tokenVersion: 1 },
+    },
     { new: true }
   ).lean<UserDoc>()
   return res!

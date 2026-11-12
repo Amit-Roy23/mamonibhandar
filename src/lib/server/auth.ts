@@ -126,9 +126,14 @@ export function verifyPassword(password: string, stored: string): boolean {
 
 export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'maamonibhandar@gmail.com').toLowerCase()
 
+/** The bootstrap / recovery owner password from Vercel (dev fallback only outside production). */
+export function envAdminPassword(): string {
+  return process.env.ADMIN_PASSWORD || (IS_PROD ? '' : 'admin123')
+}
+
 /** True when the credentials match the owner account configured in env vars. */
 export function isEnvAdminLogin(identifier: string, password: string): boolean {
-  const envPw = process.env.ADMIN_PASSWORD || (IS_PROD ? '' : 'admin123')
+  const envPw = envAdminPassword()
   if (!envPw || identifier.toLowerCase() !== ADMIN_EMAIL) return false
   const k = 'admin-compare'
   const a = crypto.createHmac('sha256', k).update(password).digest()

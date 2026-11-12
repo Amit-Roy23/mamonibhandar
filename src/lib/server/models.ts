@@ -47,6 +47,10 @@ export interface UserDoc {
   tokenVersion: number // bump to log out every session (password change, block)
   failedLogins: number
   lockUntil?: Date | null
+  /** owner account only: the owner has set their own password in the admin panel */
+  ownPassword?: boolean
+  /** owner account only: salted hash of ADMIN_PASSWORD when the owner set theirs (detects a recovery change in Vercel) */
+  envPwHash?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -79,6 +83,8 @@ const UserSchema = new Schema<UserDoc>(
     tokenVersion: { type: Number, default: 0 },
     failedLogins: { type: Number, default: 0 },
     lockUntil: { type: Date, default: null },
+    ownPassword: { type: Boolean, default: false },
+    envPwHash: { type: String },
   },
   { timestamps: true, versionKey: false }
 )

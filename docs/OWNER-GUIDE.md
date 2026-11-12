@@ -9,6 +9,9 @@ Your online shop for **Maamoni Bhandar**, Mirza Bazaar, Udaipur. Customers withi
 1. Open your website and tap **Login** (top right). Or scroll to the bottom and tap **Owner / Admin login**.
 2. Email: **maamonibhandar@gmail.com** · Password: the owner password you were given.
 3. You will land on the **Admin panel**.
+4. **First time:** choose your own password — menu → **Change password** (or Store settings → Owner password). Use at least 10 characters. After that, only your password works, and other phones/computers are signed out.
+
+**Forgot your password?** Ask your developer — they change `ADMIN_PASSWORD` in Vercel, which lets you in again; then choose a new password of your own.
 
 **Tip — make it an app on your phone:** open the website in Chrome → menu ⋮ → **Add to Home screen**. It opens like an app.
 

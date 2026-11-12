@@ -12,7 +12,7 @@ Set these for **Production** (and Preview, if you use preview deployments with t
 | Variable | Required | What it is |
 | --- | --- | --- |
 | `MONGODB_URI` | ✅ | Atlas connection string |
-| `ADMIN_PASSWORD` | ✅ | Owner login password — **10+ characters** |
+| `ADMIN_PASSWORD` | ✅ | Owner's **first-login / recovery** password — 10+ characters. Stops working once the owner sets their own password in the admin panel; changing it later is how you recover the owner's access |
 | `AUTH_SECRET` | ✅ | Random 64-char string (`openssl rand -hex 32`) that signs logins |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | ✅ | Photo uploads |
 | `NEXT_PUBLIC_SITE_URL` | ✅ after the domain is added | e.g. `https://yourdomain.in` (no trailing slash) |
@@ -65,7 +65,8 @@ Transfer ownership so the client is never locked out:
 - [ ] **MongoDB Atlas**: invite the client as **Organization Owner**; keep yourself as member if you will maintain it.
 - [ ] **Cloudinary**: account under the client's email (or invite them as Admin).
 - [ ] **GitHub repository**: transfer to the client or add them as admin.
-- [ ] **Rotate secrets** at handover: new `ADMIN_PASSWORD` (chosen by the owner) and new `AUTH_SECRET` → redeploy.
+- [ ] **Rotate secrets** at handover: new `AUTH_SECRET` → redeploy. The owner then logs in with `ADMIN_PASSWORD` once and sets **their own password** (admin menu → Change password); from then on `ADMIN_PASSWORD` no longer works.
+- [ ] **Owner password recovery:** if the owner forgets their password, change `ADMIN_PASSWORD` in Vercel and redeploy — the new value lets them in once more, and they set a fresh password of their own.
 - [ ] Owner logs in, enables **Sound** and **Alerts** in the admin sidebar, and installs the site on their phone (browser menu → *Add to Home screen*).
 - [ ] Fill **Store settings**: phone, WhatsApp, opening hours, delivery fee, minimum order; check the **Delivery area** pin and radius.
 - [ ] Replace the illustrated category images with real photos (Admin → Categories) and add products.

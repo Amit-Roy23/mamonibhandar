@@ -6,6 +6,7 @@ import { ApiError } from './http'
 import { ADMIN_EMAIL, envAdminPassword, hashPassword, isEnvAdminLogin, verifyPassword } from './auth'
 import type { Address, User } from '../types'
 import { getSettings } from './settings'
+import { assertLoginAllowed, clearLoginFailures, recordLoginFailure } from './rate-limit'
 import { checkZone, formatKm, formatKmAway } from '../geo'
 
 /** Addresses must be pinned and inside the delivery radius. */
@@ -20,8 +21,6 @@ async function assertDeliverable(a: { lat?: number; lng?: number }) {
   )
 }
 
-const MAX_FAILED = 5
-const LOCK_MINUTES = 15
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
@@ -42,17 +41,6 @@ export async function registerUser(i: { name: string; phone: string; email?: str
   return doc.toObject() as UserDoc
 }
 
-/** A wrong password: count it, and lock the account for 15 minutes after 5 in a row. */
-async function recordFailedLogin(user: UserDoc) {
-  const failed = (user.failedLogins || 0) + 1
-  await UserModel.updateOne(
-    { _id: user._id },
-    failed >= MAX_FAILED
-      ? { $set: { failedLogins: 0, lockUntil: new Date(Date.now() + LOCK_MINUTES * 60_000) } }
-      : { $set: { failedLogins: failed } }
-  )
-}
-
 /**
  * Owner login rules:
  * - until the owner sets their own password in the admin panel, only ADMIN_PASSWORD (Vercel) works;
@@ -60,11 +48,9 @@ async function recordFailedLogin(user: UserDoc) {
  * - recovery: if ADMIN_PASSWORD in Vercel is changed later, the new Vercel password works again
  *   (and the owner can then set a fresh password of their own).
  */
-async function authenticateOwner(password: string): Promise<UserDoc> {
+async function authenticateOwner(password: string, ip: string): Promise<UserDoc> {
+  await assertLoginAllowed('owner', ip)
   const owner = await UserModel.findOne({ email: ADMIN_EMAIL }).lean<UserDoc>()
-  if (owner?.lockUntil && new Date(owner.lockUntil).getTime() > Date.now()) {
-    throw new ApiError(429, 'Too many wrong attempts. Please try again in a few minutes.')
-  }
   const envPw = envAdminPassword()
   const recovering = !!(owner?.ownPassword && envPw && owner.envPwHash && !verifyPassword(envPw, owner.envPwHash))
   const useEnv = !owner?.ownPassword || recovering
@@ -86,35 +72,41 @@ async function authenticateOwner(password: string): Promise<UserDoc> {
       },
       { upsert: true, new: true }
     ).lean<UserDoc>()
+    await clearLoginFailures('owner', ip)
     return admin!
   }
-  if (owner) await recordFailedLogin(owner)
+  await recordLoginFailure('owner', ip)
   await delay(400)
   throw new ApiError(401, 'Incorrect phone/email or password')
 }
 
-/** Login with phone or email. Locks the account for 15 min after 5 wrong passwords. */
-export async function authenticate(identifier: string, password: string): Promise<UserDoc> {
+/**
+ * Login with phone or email. After 5 wrong passwords for one account from one
+ * device (IP), that device must wait until the 15-minute window ends.
+ */
+export async function authenticate(identifier: string, password: string, ip = 'unknown'): Promise<UserDoc> {
   await connectDB()
   const id = identifier.trim()
 
-  if (id.toLowerCase() === ADMIN_EMAIL) return authenticateOwner(password)
+  if (id.toLowerCase() === ADMIN_EMAIL) return authenticateOwner(password, ip)
 
   const query = id.includes('@') ? { email: id.toLowerCase() } : { phone: normalisePhone(id) }
+  const account = id.includes('@') ? id.toLowerCase() : normalisePhone(id)
+  await assertLoginAllowed(account, ip)
   const user = await UserModel.findOne(query).lean<UserDoc>()
   if (!user) {
+    await recordLoginFailure(account, ip)
     await delay(400)
     throw new ApiError(401, 'Incorrect phone/email or password')
   }
-  if (user.lockUntil && new Date(user.lockUntil).getTime() > Date.now()) {
-    throw new ApiError(429, 'Too many wrong attempts. Please try again in a few minutes.')
-  }
   if (!verifyPassword(password, user.passwordHash)) {
-    await recordFailedLogin(user)
+    await recordLoginFailure(account, ip)
     await delay(400)
     throw new ApiError(401, 'Incorrect phone/email or password')
   }
   if (user.blocked) throw new ApiError(403, 'This account has been disabled. Please contact the store.')
+  await clearLoginFailures(account, ip)
+  // clear the old account-wide lock fields left by earlier versions
   if (user.failedLogins || user.lockUntil) await UserModel.updateOne({ _id: user._id }, { $set: { failedLogins: 0, lockUntil: null } })
   return user
 }

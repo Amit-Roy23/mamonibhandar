@@ -45,3 +45,53 @@ export const LIMITS = {
   password: { limit: 10, windowSec: 3600 }, // per customer, per hour
   geo: { limit: 30, windowSec: 600 }, // per admin
 } as const
+
+/* ------------------------------------------------------------------ */
+/* Wrong-password protection, per account AND device                  */
+/* ------------------------------------------------------------------ */
+
+const LOGIN_FAIL_LIMIT = 5
+const LOGIN_FAIL_WINDOW_SEC = 15 * 60
+
+function failId(account: string, ip: string) {
+  const window = Math.floor(Date.now() / 1000 / LOGIN_FAIL_WINDOW_SEC)
+  return { id: `login-fail:${account}:${ip}:${window}`, window }
+}
+
+/**
+ * Blocks a device after 5 wrong passwords for one account (until the 15-minute
+ * window ends). Keyed by account + IP, so a stranger guessing elsewhere can
+ * never lock the real owner out of their own phone.
+ */
+export async function assertLoginAllowed(account: string, ip: string) {
+  const { id, window } = failId(account, ip)
+  let count = 0
+  try {
+    await connectDB()
+    count = (await RateLimitModel.findById(id).lean())?.count ?? 0
+  } catch (e) {
+    console.error('assertLoginAllowed failed (allowing request)', e)
+    return
+  }
+  if (count >= LOGIN_FAIL_LIMIT) {
+    const mins = Math.max(1, Math.ceil(((window + 1) * LOGIN_FAIL_WINDOW_SEC * 1000 - Date.now()) / 60000))
+    throw new ApiError(429, `Too many wrong passwords from this device. Please wait ${mins} minute${mins === 1 ? '' : 's'} and try again.`)
+  }
+}
+
+export async function recordLoginFailure(account: string, ip: string) {
+  const { id, window } = failId(account, ip)
+  try {
+    await RateLimitModel.updateOne(
+      { _id: id },
+      { $inc: { count: 1 }, $setOnInsert: { expiresAt: new Date((window + 1) * LOGIN_FAIL_WINDOW_SEC * 1000 + 60_000) } },
+      { upsert: true }
+    )
+  } catch (e) {
+    console.error('recordLoginFailure failed', e)
+  }
+}
+
+export async function clearLoginFailures(account: string, ip: string) {
+  await RateLimitModel.deleteOne({ _id: failId(account, ip).id }).catch(() => {})
+}

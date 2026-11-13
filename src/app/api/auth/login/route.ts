@@ -9,7 +9,7 @@ import { toUser } from '@/lib/server/mappers'
 export const POST = route(async (req) => {
   await rateLimit('login', clientIp(req), LIMITS.login.limit, LIMITS.login.windowSec)
   const { identifier, password } = await body(req, loginSchema)
-  const user = await authenticate(identifier, password)
+  const user = await authenticate(identifier, password, clientIp(req))
   const res = NextResponse.json({ user: toUser(user) })
   setSessionCookie(res, user)
   return res
